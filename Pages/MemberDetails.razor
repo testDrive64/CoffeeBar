@@ -1,0 +1,18 @@
+@page "/memberdetails/{Id:int}"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+
+<h3> @member.Name </h3>
+<label>Name</label>
+<InputNumber id="NameInput" @bind-Value=@member.Name></InputNumber>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    public Member member { 
+        get {
+            return memberService.GetMember(Id);
+        }
+    }
+}
