@@ -8,6 +8,8 @@ public class CoffeesContext : DbContext {
 
     }
 
+    public double CurrentPrice = .2;
     public DbSet<Member> Members { get; set; }
     public DbSet<Coffee> Coffees { get; set; }
+    public DbSet<PayInfo> PayInfos { get; set; }
 }

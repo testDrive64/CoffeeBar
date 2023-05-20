@@ -26,6 +26,8 @@ table {
     <th>Name</th>
     <th>Coffee(s)</th>
     <th>Price</th>
+    <th>Add Coffee</th>
+    <th>Pay</th>
     @foreach (var member in team)
     {
         <CoffeeListItem member=member />
@@ -36,7 +38,7 @@ table {
     [Parameter]
     public List<Member> team { 
         get {
-return memberService.GetMembers();
+          return memberService.GetMembers();
             @* List<Member> _team = new();
             Member mem1 = new();
             mem1.Name = "Daniel";

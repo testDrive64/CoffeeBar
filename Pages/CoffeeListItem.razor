@@ -6,9 +6,11 @@
 
 <tr>
     <td>
-        <NavLink class="nav-link" href="memberdetails/1">
-            <p role="status">@member.Name</p>
-        </NavLink>
+        @* <div class="col flex-grow-0"> *@
+            <a href="memberdetails/@member.Id"> @* class="btn btn-success">*@
+                <p role="status">@member.Name</p>
+            </a>
+        @* </div> *@
     </td>
     <td><p>@CoffeeAmount</p></td>
     <td><p>@getCost € </p></td>
@@ -42,6 +44,7 @@
     private void ResetCheck() {
         // Should ask with a window if you really pay the right amount or configure the money that was paid.
         // member.AmountCoffee = 0;
-        memberService.UpdateMemberByName(member.Id, member.Name, member.AmountCoffee);
+        @* memberService.UpdateMemberByName(member.Id, member.Name, member.AmountCoffee); *@
+        memberService.Pay(member.Id, coffeeService.GetOpenCoffeeAmount());
     }
 }

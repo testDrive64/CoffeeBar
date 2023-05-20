@@ -1,0 +1,45 @@
+@page "/memberdetails/{id:int}"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+@inject CoffeeService coffeeService;
+@implements IDisposable
+
+<h3>@member.Name</h3>
+<h6>Coffees</h6>
+<p>@coffees.Count</p>
+@foreach (var coffee in @coffees.Where(x => x.CreatedDate == coffees[0].CreatedDate).ToList())
+{
+    <p>@coffee.CreatedDate</p>
+}
+
+@foreach (var coffee in coffees)
+{
+    <p>@coffee.CreatedDate</p> 
+    <p>@coffee.Member</p>
+    <p>@member.Id</p>
+    <p>@coffee.Id</p>
+    <p>@coffee.MemberObjID</p>
+    <p>@coffee.ObjID</p>
+}
+
+@code {
+    CancellationTokenSource pollingCancellationToken;
+    [Parameter] public int Id { get; set; }
+    public Member member { 
+        get {
+            return memberService.GetMember(Id);
+        }
+    }
+
+    public List<Coffee> coffees {
+        get {
+            return coffeeService.GetCoffeeListById(Id);
+        }    
+    }
+
+    void IDisposable.Dispose()
+    {
+        pollingCancellationToken?.Cancel();
+    }
+}

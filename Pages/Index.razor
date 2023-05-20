@@ -2,34 +2,16 @@
 @using CoffeeBar.Services
 @using CoffeeBar.Data.Models
 @inject MemberService memberService;
+@inject NavigationManager navManager;
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Manager</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Manager</h1>
 
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
-
-<Counter IncrementAmount="10"/>
-
-<EditForm Model=@member OnValidSubmit="HandleSubmit">
-    <label for="NameInput">Name</label>
-    <InputText id="NameInput" @bind-Value=@member.Name></InputText>
-    @* <label for="CoffeeInput">Coffee Amount </label> *@
-    @* <InputNumber id="CoffeeInput" @bind-Value=@member.AmountCoffee></InputNumber> *@
-    <button type="submit" class="btn-primary">Create</button>
-</EditForm>
-
+@* <SurveyPrompt Title="How is Blazor working for you?" /> *@
+<br />
+<a href="addmember"><button type="submit" class="btn-primary">Add Member</button></a>
 
 @code {
-    Member member = new Member();
-
-    public void HandleSubmit(EditContext editContext) {
-        var newMember = (Member)editContext.Model;
-        newMember.CreatedDate = DateTime.Now;
-        //newMember.ObjID = new Guid(new byte([1234567891011121314]);
-        memberService.AddMember(newMember);
-    }
 }
 

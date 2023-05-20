@@ -17,9 +17,19 @@ public class CoffeeService {
             return context.Coffees.Where(x => x.Member.Id == member.Id).ToList();
         }
     }
+    public List<Coffee> GetCoffeeListById(int id) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            return context.Coffees.Where(x => x.Member.Id == id).ToList();
+        }
+    }
+
 
     public int GetCoffeeAmount(Member member) {
         return GetCoffeeList(member).Count();
+    }
+
+    public int GetOpenCoffeeAmount(Member member) {
+        return GetCoffeeList(member).Where(x => x.CreatedDate <  MemberService.GetLastPayDate(member.Id)).Count();
     }
 
     public async void AddCoffee(Member member) {
@@ -27,10 +37,6 @@ public class CoffeeService {
         newCoffee.CreatedDate = DateTime.Now;
         newCoffee.Member = member;
         newCoffee.MemberObjID = member.ObjID;
-
-        Console.WriteLine("##############################################");
-        Console.WriteLine($"Name: {member.Name}, ID: {member.Id}");
-        Console.WriteLine("##############################################");
 
         using(var context = _dbContextFactory.CreateDbContext()) {
             //context.Coffees.Add(newCoffee);

@@ -31,6 +31,8 @@ public class MemberService {
 
         using(var context = _dbContextFactory.CreateDbContext()) {
             var member = context.Members.SingleOrDefault(x => x.Id == id);
+            if(member == null)
+                throw new Exception($"Member does not exist. The Id: {id} does not exists.");
             return member;
         }
     }
@@ -48,4 +50,28 @@ public class MemberService {
         }
     }
 
+    public void Pay(int id, int paidCoffees) {
+        PayInfo payInfo = new PayInfo();
+        var currentPrice = 0.0;
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            currentPrice = context.CurrentPrice;
+        }
+        payInfo.Created = DateTime.Now;
+        payInfo.Member = GetMember(id);
+        payInfo.MemberId = id;
+        payInfo.Amount = paidCoffees;
+        payInfo.CurrentCoffeePrice = paidCoffees * currentPrice;
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            context.PayInfos.Add(payInfo);
+            context.SaveChanges();
+        }
+    }
+
+    public DateTime GetLastPayDate(int memberId) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            context.PayInfos.Where(x => x.MemberId == memberId);
+            context.SaveChanges();
+        }
+        return DateTime.Now;
+    }
 }
