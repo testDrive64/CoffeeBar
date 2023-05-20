@@ -1,0 +1,29 @@
+@page "/addmember"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject NavigationManager navManager;
+@inject MemberService memberService;
+
+<EditForm Model=@member OnValidSubmit="HandleSubmit">
+    <label for="NameInput">Name</label>
+    <InputText id="NameInput" @bind-Value=@member.Name></InputText>
+    @* <label for="CoffeeInput">Coffee Amount </label> *@
+    @* <InputNumber id="CoffeeInput" @bind-Value=@member.AmountCoffee></InputNumber> *@
+    <br/>
+    <br/>
+    @* <NavLink class="nav-link" href="coffeelist"> *@
+        <button type="submit" class="btn-primary">Create</button>
+    @* </NavLink> *@
+</EditForm>
+
+@code {
+    Member member = new Member();
+
+    public void HandleSubmit(EditContext editContext) {
+        var newMember = (Member)editContext.Model;
+        newMember.CreatedDate = DateTime.Now;
+        //newMember.ObjID = new Guid(new byte([1234567891011121314]);
+        memberService.AddMember(newMember);
+        navManager.NavigateTo("coffeelist", true);
+    }
+}

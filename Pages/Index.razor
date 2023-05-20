@@ -1,0 +1,17 @@
+﻿@page "/"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+@inject NavigationManager navManager;
+
+<PageTitle>Manager</PageTitle>
+
+<h1>Manager</h1>
+
+@* <SurveyPrompt Title="How is Blazor working for you?" /> *@
+<br />
+<a href="addmember"><button type="submit" class="btn-primary">Add Member</button></a>
+
+@code {
+}
+

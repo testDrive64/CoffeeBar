@@ -1,0 +1,62 @@
+﻿@page "/coffeelist"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+<style>
+table {
+  font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+
+  tr:nth-child(even) {
+    background-color: #dddddd;
+  }
+</style>
+
+<h3>CoffeeList</h3>
+
+<table>
+    <th>Name</th>
+    <th>Coffee(s)</th>
+    <th>Price</th>
+    <th>Add Coffee</th>
+    <th>Pay</th>
+    @foreach (var member in team)
+    {
+        <CoffeeListItem member=member />
+    }
+</table>
+
+@code {
+    [Parameter]
+    public List<Member> team { 
+        get {
+          return memberService.GetMembers();
+            @* List<Member> _team = new();
+            Member mem1 = new();
+            mem1.Name = "Daniel";
+            Member mem2 = new();
+            mem2.Name = "Eric";
+            Member mem3 = new();
+            mem3.Name = "Patrick";
+            Member mem4 = new();
+            mem4.Name = "Tobias";
+            Member mem5 = new();
+            mem5.Name = "Manuel";
+            _team.Add(mem1);
+            _team.Add(mem2);
+            _team.Add(mem3);
+            _team.Add(mem4);
+            _team.Add(mem5); 
+            return _team; *@
+        }
+        set => team = value;
+    } 
+}
