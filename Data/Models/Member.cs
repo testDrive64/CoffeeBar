@@ -7,6 +7,7 @@ public class Member {
     public int Id { get; set; }
     public string? ObjID {get; set;}
     public string? Name { get; set; }
+    public List<PayInfo> PayInfos { get; set; }
     public int AmountCoffee {
         get {
             if (Coffees !=null) return Coffees.Count();

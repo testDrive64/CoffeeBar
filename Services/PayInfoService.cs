@@ -14,7 +14,7 @@ public class PayInfoService {
         _dbContextFactory = dbContext;
     }
 
-    public void AddPayInfo(PayInfo payInfo) {
+    public void Add(PayInfo payInfo) {
         using(var context = _dbContextFactory.CreateDbContext()) {
             context.PayInfos.Add(payInfo);
             context.SaveChanges();
@@ -25,14 +25,20 @@ public class PayInfoService {
             return context.PayInfos.ToList<PayInfo>();
         }
     }
-    public PayInfo GetPayInfo(int memberId) {
+    public PayInfo GetPayInfo(Member member) {
 
         using(var context = _dbContextFactory.CreateDbContext()) {
-            var membersPayInfo = context.PayInfos.SingleOrDefault(x => x.MemberId == memberId);
+            var membersPayInfo = context.PayInfos.SingleOrDefault(x => x.MemberId == member.Id);
             if( membersPayInfo == null)
-                throw new Exception($"Member does not exist. The Id: {memberId} does not exists.");
-            return membersPayInfo;
+                return new PayInfo(member);
+                // throw new Exception($"Member does not exist. The Id: {memberId} does not exists.");
+            return membersPayInfo;  
         }
+    }
+
+    public DateTime GetLastPayDate(Member member) {
+        PayInfo payInfo = GetPayInfo(member);
+        return payInfo.Created;
     }
 
 }

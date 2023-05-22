@@ -3,6 +3,7 @@
 @using CoffeeBar.Data.Models
 @inject MemberService memberService;
 @inject CoffeeService coffeeService;
+@inject PayInfoService payInfoService;
 
 <tr>
     <td>
@@ -13,9 +14,11 @@
         @* </div> *@
     </td>
     <td><p>@CoffeeAmount</p></td>
+    <td><p>@OpenCoffeeAmount</p></td>
     <td><p>@getCost € </p></td>
     <td><button @onclick="AddCoffee">+</button></td>
     <td><button @onclick="ResetCheck">Reset</button></td>
+    <td><p>@lastPayDate</p></td>
 </tr>
 
 @code {
@@ -30,7 +33,17 @@
         }
     }
     public double getCost {
-        get => Math.Round(CoffeeAmount*coffeeCost, 2);
+        get => Math.Round(OpenCoffeeAmount*coffeeCost, 2);
+    }
+
+    public int OpenCoffeeAmount {
+        get {
+            return coffeeService.GetOpenCoffeeAmount(member);
+        }
+    }
+
+    public DateTime lastPayDate {
+        get => payInfoService.GetLastPayDate(member);
     }
     private void AddCoffee() {
         //member.AmountCoffee ++;
@@ -45,6 +58,7 @@
         // Should ask with a window if you really pay the right amount or configure the money that was paid.
         // member.AmountCoffee = 0;
         @* memberService.UpdateMemberByName(member.Id, member.Name, member.AmountCoffee); *@
-        memberService.Pay(member.Id, coffeeService.GetOpenCoffeeAmount());
+        int openCoffees = coffeeService.GetOpenCoffeeAmount(member);
+        memberService.Pay(member, openCoffees);
     }
 }

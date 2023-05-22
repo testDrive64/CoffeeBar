@@ -10,10 +10,13 @@ namespace CoffeeBar.Services;
 public class MemberService {
 
     public List<Member>? _members { get; set; }
+    
+    private PayInfoService? payInfoService;
     private IDbContextFactory<CoffeesContext> _dbContextFactory;
 
     public MemberService(IDbContextFactory<CoffeesContext> dbContext) {
         _dbContextFactory = dbContext;
+        payInfoService =  new PayInfoService(dbContext);
     }
 
     public void AddMember(Member member) {
@@ -50,20 +53,31 @@ public class MemberService {
         }
     }
 
-    public void Pay(int id, int paidCoffees) {
-        PayInfo payInfo = new PayInfo();
+    public void Pay(Member member, int paidCoffees) {
+
+        PayInfo payInfo = new PayInfo(member);
         var currentPrice = 0.0;
         using(var context = _dbContextFactory.CreateDbContext()) {
             currentPrice = context.CurrentPrice;
         }
         payInfo.Created = DateTime.Now;
-        payInfo.Member = GetMember(id);
-        payInfo.MemberId = id;
+        // payInfo.Member = member;
+        payInfo.MemberId = member.Id;
         payInfo.Amount = paidCoffees;
         payInfo.CurrentCoffeePrice = paidCoffees * currentPrice;
-        using(var context = _dbContextFactory.CreateDbContext()) {
-            context.PayInfos.Add(payInfo);
-            context.SaveChanges();
+        if(payInfo == null) {
+            throw new Exception("The PayInfo is nothing.");
+        }
+        
+        // payInfoService.Add(payInfo);
+        if (member.PayInfos == null)
+            member.PayInfos = new List<PayInfo>();
+        member.PayInfos.Add(payInfo);
+
+         using(var context = _dbContextFactory.CreateDbContext()) {
+            //  context.PayInfos.Add(payInfo);
+             context.Members.Update(member);
+             context.SaveChanges();
         }
     }
 
