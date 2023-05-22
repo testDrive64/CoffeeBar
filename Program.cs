@@ -15,6 +15,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddTransient<MemberService>();
 builder.Services.AddTransient<CoffeeService>();
+builder.Services.AddTransient<PayInfoService>();
 
 builder.Services.AddDbContextFactory<CoffeesContext>((DbContextOptionsBuilder options) => 
     options.UseSqlite(connectionString)

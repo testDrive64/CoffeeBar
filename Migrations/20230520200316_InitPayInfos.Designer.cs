@@ -3,6 +3,7 @@ using System;
 using CoffeeBar.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoffeeBar.Migrations
 {
     [DbContext(typeof(CoffeesContext))]
-    partial class CoffeesContextModelSnapshot : ModelSnapshot
+    [Migration("20230520200316_InitPayInfos")]
+    partial class InitPayInfos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.0");
@@ -101,7 +104,7 @@ namespace CoffeeBar.Migrations
             modelBuilder.Entity("CoffeeBar.Data.Models.PayInfo", b =>
                 {
                     b.HasOne("CoffeeBar.Data.Models.Member", "Member")
-                        .WithMany("PayInfos")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -112,8 +115,6 @@ namespace CoffeeBar.Migrations
             modelBuilder.Entity("CoffeeBar.Data.Models.Member", b =>
                 {
                     b.Navigation("Coffees");
-
-                    b.Navigation("PayInfos");
                 });
 #pragma warning restore 612, 618
         }

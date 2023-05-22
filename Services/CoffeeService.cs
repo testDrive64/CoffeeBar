@@ -6,10 +6,13 @@ using System.Linq;
 namespace CoffeeBar.Services;
 
 public class CoffeeService {
+    
+    private PayInfoService payInfoService = null;
     private IDbContextFactory<CoffeesContext> _dbContextFactory;
 
     public CoffeeService (IDbContextFactory<CoffeesContext> dbContext) {
         _dbContextFactory = dbContext;
+        payInfoService = new PayInfoService(dbContext);
     }
 
     public List<Coffee> GetCoffeeList(Member member) {
@@ -29,7 +32,7 @@ public class CoffeeService {
     }
 
     public int GetOpenCoffeeAmount(Member member) {
-        return GetCoffeeList(member).Where(x => x.CreatedDate <  MemberService.GetLastPayDate(member.Id)).Count();
+        return GetCoffeeList(member).Where(x => x.CreatedDate > payInfoService.GetLastPayDate(member)).Count();
     }
 
     public async void AddCoffee(Member member) {

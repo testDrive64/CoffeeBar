@@ -9,4 +9,16 @@ public class PayInfo {
     public Member Member{ get; set; }
     public double Amount{ get; set; }
     public double CurrentCoffeePrice{ get; set; }
+
+
+    public PayInfo() {
+        Created = DateTime.MinValue;
+    }
+
+    public PayInfo(Member member) {
+        Created = DateTime.MinValue;
+        MemberId = member.Id;
+        Member = member;
+        Amount = 0;
+    }
 }
