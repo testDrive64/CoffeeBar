@@ -7,7 +7,7 @@ namespace CoffeeBar.Services;
 
 public class PayInfoService {
 
-    public List<PayInfo>? _PayInfo{ get; set; }
+    // public List<PayInfo>? _PayInfo{ get; set; }
     private IDbContextFactory<CoffeesContext> _dbContextFactory;
 
     public PayInfoService (IDbContextFactory<CoffeesContext> dbContext) {
@@ -28,7 +28,10 @@ public class PayInfoService {
     public PayInfo GetPayInfo(Member member) {
 
         using(var context = _dbContextFactory.CreateDbContext()) {
-            var membersPayInfo = context.PayInfos.SingleOrDefault(x => x.MemberId == member.Id);
+            var membersPayInfo = context.PayInfos
+                                    .Where(x => x.MemberId == member.Id)
+                                    .OrderBy(x => x.Created)
+                                    .LastOrDefault();
             if( membersPayInfo == null)
                 return new PayInfo(member);
                 // throw new Exception($"Member does not exist. The Id: {memberId} does not exists.");
