@@ -15,24 +15,36 @@ public class CoffeeService {
         payInfoService = new PayInfoService(dbContext);
     }
 
-    public List<Coffee> GetCoffeeList(Member member) {
+    public List<Coffee> GetCoffees(Member member) {
         using(var context = _dbContextFactory.CreateDbContext()) {
             return context.Coffees.Where(x => x.Member.Id == member.Id).ToList();
         }
     }
-    public List<Coffee> GetCoffeeListById(int id) {
+    public List<Coffee> GetCoffeesById(int id) {
         using(var context = _dbContextFactory.CreateDbContext()) {
             return context.Coffees.Where(x => x.Member.Id == id).ToList();
         }
     }
 
-
     public int GetCoffeeAmount(Member member) {
-        return GetCoffeeList(member).Count();
+        return GetCoffees(member).Count();
     }
 
     public int GetOpenCoffeeAmount(Member member) {
-        return GetCoffeeList(member).Where(x => x.CreatedDate > payInfoService.GetLastPayDate(member)).Count();
+        return GetCoffees(member).Where(x => x.CreatedDate > payInfoService.GetLastPayDate(member)).Count();
+    }
+
+    public Dictionary<DateTime, int> GetDailyCoffeeAmount(Member member) {
+        Dictionary<DateTime, int> timeAmountDict = new Dictionary<DateTime, int>();
+        foreach (Coffee coffee in this.GetCoffees(member)) {
+            if (timeAmountDict.ContainsKey(coffee.CreatedDate.Date)) {
+                int oldAmount = timeAmountDict[coffee.CreatedDate.Date];
+                timeAmountDict[coffee.CreatedDate.Date] = oldAmount + 1;
+            } else {
+                timeAmountDict.Add(coffee.CreatedDate.Date, 1);
+            }
+        }
+        return timeAmountDict;
     }
 
     public async void AddCoffee(Member member) {

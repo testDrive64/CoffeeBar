@@ -46,29 +46,15 @@ table {
 
     public List<Coffee> coffees {
         get {
-            return coffeeService.GetCoffeeListById(Id);
+            return coffeeService.GetCoffeesById(Id);
         }    
     }
 
     public Dictionary<DateTime, int> dates {
         get {
-            List<DateTime> timeList = new List<DateTime>();
-            Dictionary<DateTime, int> timeAmountDict = new Dictionary<DateTime, int>();
-            foreach (Coffee coffee in coffees) {
-                if (timeAmountDict.ContainsKey(coffee.CreatedDate.Date)) {
-                    int oldAmount = timeAmountDict[coffee.CreatedDate.Date];
-                    timeAmountDict[coffee.CreatedDate.Date] = oldAmount + 1;
-                } else {
-                    timeAmountDict.Add(coffee.CreatedDate.Date, 1);
-                }
-            }
-            return timeAmountDict;
+            return coffeeService.GetDailyCoffeeAmount(member);
         }    
-    }
-    
-    @* public List<int> getDailyAmount() {
-
-    } *@
+    }   
 
     void IDisposable.Dispose()
     {
