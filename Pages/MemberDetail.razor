@@ -4,24 +4,36 @@
 @inject MemberService memberService;
 @inject CoffeeService coffeeService;
 @implements IDisposable
+<style>
+table {
+  font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 70%;
+  }
 
+  td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+
+  tr:nth-child(even) {
+    background-color: #dddddd;
+  }
+</style>
 <h3>@member.Name</h3>
-<h6>Coffees</h6>
-<p>@coffees.Count</p>
-@foreach (var coffee in @coffees.Where(x => x.CreatedDate == coffees[0].CreatedDate).ToList())
-{
-    <p>@coffee.CreatedDate</p>
-}
+<p>Coffees: @coffees.Count</p>
 
-@foreach (var coffee in coffees)
-{
-    <p>@coffee.CreatedDate</p> 
-    <p>@coffee.Member</p>
-    <p>@member.Id</p>
-    <p>@coffee.Id</p>
-    <p>@coffee.MemberObjID</p>
-    <p>@coffee.ObjID</p>
-}
+<table>
+    <th>Date</th>
+    <th>Amount</th>
+    @foreach (var date in @dates) {
+        <tr>
+            <td>@date.Key.Date.ToString("dd.MM.yyyy")</td>
+            <td>@date.Value</td>
+        </tr>
+    }
+</table>
 
 @code {
     CancellationTokenSource pollingCancellationToken;
@@ -34,9 +46,15 @@
 
     public List<Coffee> coffees {
         get {
-            return coffeeService.GetCoffeeListById(Id);
+            return coffeeService.GetCoffeesById(Id);
         }    
     }
+
+    public Dictionary<DateTime, int> dates {
+        get {
+            return coffeeService.GetDailyCoffeeAmount(member);
+        }    
+    }   
 
     void IDisposable.Dispose()
     {
