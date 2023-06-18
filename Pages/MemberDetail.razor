@@ -1,14 +1,24 @@
 @page "/memberdetails/{id:int}"
+@using System
+@using System.Collections.Generic
 @using CoffeeBar.Services
 @using CoffeeBar.Data.Models
-@inject MemberService memberService;
-@inject CoffeeService coffeeService;
+@using ChartJs.Blazor.LineChart
+@using ChartJs.Blazor.BarChart
+@using ChartJs.Blazor.Common.Axes
+@using ChartJs.Blazor.Common.Time
+@inject MemberService memberService
+@inject CoffeeService coffeeService
+@inject PayInfoService payInfoService
 @implements IDisposable
+
+@layout SampleLayout
+
 <style>
 table {
   font-family: arial, sans-serif;
     border-collapse: collapse;
-    width: 70%;
+    width: 60%;
   }
 
   td, th {
@@ -21,22 +31,34 @@ table {
     background-color: #dddddd;
   }
 </style>
-<h3>@member.Name</h3>
-<p>Coffees: @coffees.Count</p>
 
 <table>
     <th>Date</th>
     <th>Amount</th>
-    @foreach (var date in @dates) {
+    @foreach (var coffee in dates)
+    {
         <tr>
-            <td>@date.Key.Date.ToString("dd.MM.yyyy")</td>
-            <td>@date.Value</td>
-        </tr>
+            <td>@coffee.Key.ToShortDateString()</td>
+            <td>@coffee.Value</td>
+        </tr>   
+    }
+</table>
+<table>
+    <th>Date</th>
+    <th>Price (€)</th>
+    @foreach (var payDate in payDates)
+    {
+        <tr>
+            <td>@payDate.Created.ToShortDateString()</td>
+            <td>@payDate.Amount.ToString()</td>
+        </tr>   
     }
 </table>
 
+
+<Chart Config="_config"></Chart>
+
 @code {
-    CancellationTokenSource pollingCancellationToken;
     [Parameter] public int Id { get; set; }
     public Member member { 
         get {
@@ -50,14 +72,106 @@ table {
         }    
     }
 
+
     public Dictionary<DateTime, int> dates {
         get {
             return coffeeService.GetDailyCoffeeAmount(member);
         }    
-    }   
+    } 
 
-    void IDisposable.Dispose()
-    {
+    public List<PayInfo> payDates {
+        get {
+            return payInfoService.GetPayInfos(member);
+        }    
+    }
+    CancellationTokenSource pollingCancellationToken;
+    private const int InitalCount = 7;
+    private LineConfig _config;
+
+    protected override void OnInitialized() {
+        _config = new LineConfig
+        {
+            Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Daily Coffee and Paid Coffee"
+                },
+                Tooltips = new Tooltips
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Hover = new Hover
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Scales = new Scales() {
+                    XAxes = new List<CartesianAxis>() {
+                        new TimeAxis {
+                            ScaleLabel = new ScaleLabel {
+                                LabelString = "Date"
+                            },
+                            Time = new TimeOptions {
+                                TooltipFormat = "ll HH:mm"
+                            },
+                        }
+                    },
+                    YAxes = new List<CartesianAxis>() {
+                        new LinearCartesianAxis {
+                            ScaleLabel = new ScaleLabel {
+                                LabelString = "Value"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        var dateList = new List<DateTime>();
+        foreach (DateTime date in coffeeService.GetDailyCoffeeAmount(member).Keys) {
+            if (!dateList.Contains(date.Date))
+                dateList.Add(date.Date);
+        }
+
+        foreach(PayInfo thisPayInfo in payInfoService.GetPayInfos(member)){
+            if (!dateList.Contains(thisPayInfo.Created.Date))
+                dateList.Add(thisPayInfo.Created.Date);
+        }
+        foreach(var date in dateList.Order<DateTime>().ToList()) {
+            Console.WriteLine($"### ### {date.ToString("o")} ### ###");
+            _config.Data.Labels.Add(date.ToString("o"));
+        }
+
+
+        IDataset<TimePoint> dataset1 = new LineDataset<TimePoint>() {
+            Label = "Daily Amount Data",
+            BackgroundColor = ColorUtil.FromDrawingColor(ChartColors.Red),
+            BorderColor = ColorUtil.FromDrawingColor(ChartColors.Red),
+            Fill = FillingMode.Disabled
+        };
+        foreach(var coffee in coffeeService.GetDailyCoffeeAmount(member)) {
+            dataset1.Add(new TimePoint(coffee.Key, coffee.Value));
+        }
+
+        IDataset<TimePoint> dataset2 = new LineDataset<TimePoint>() {
+            Label = "Pay Dates",
+            BackgroundColor = ColorUtil.FromDrawingColor(ChartColors.Blue),
+            BorderColor = ColorUtil.FromDrawingColor(ChartColors.Blue),
+            Fill = FillingMode.Disabled
+        };
+        foreach(var payInfo in payInfoService.GetPayInfos(member)) {
+            dataset2.Add(new TimePoint(payInfo.Created, payInfo.Amount));
+        }
+
+        _config.Data.Datasets.Add(dataset1);
+        _config.Data.Datasets.Add(dataset2);
+    }
+
+    void IDisposable.Dispose() {
         pollingCancellationToken?.Cancel();
     }
 }

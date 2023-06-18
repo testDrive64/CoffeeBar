@@ -17,6 +17,7 @@
     <td><p>@OpenCoffeeAmount</p></td>
     <td><p>@getCost € </p></td>
     <td><button @onclick="AddCoffee">+</button></td>
+    <td><button @onclick="RemoveLastCoffee">-</button></td>
     <td><button @onclick="ResetCheck">Reset</button></td>
     <td><p>@lastPayDate</p></td>
 </tr>
@@ -49,11 +50,18 @@
         //member.AmountCoffee ++;
         //memberService.UpdateMemberByName(member.Id, member.Name, member.AmountCoffee);
         if (member == null)
-            throw new Exception("Member is null");
+            throw new Exception("No Member is defined!");
         coffeeService.AddCoffee(member);
-        memberService.GetMembers();
-        member = memberService.GetMember(member.Id);
+        @* memberService.GetMembers();
+        member = memberService.GetMember(member.Id); *@
     }
+
+    private void RemoveLastCoffee() {
+        if(member == null)
+            throw new Exception("No Member is defined!");
+        coffeeService.RemoveLastCoffee(member);
+    }
+
     private void ResetCheck() {
         // Should ask with a window if you really pay the right amount or configure the money that was paid.
         // member.AmountCoffee = 0;

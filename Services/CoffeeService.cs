@@ -62,4 +62,20 @@ public class CoffeeService {
             await context.SaveChangesAsync();
         }
     }
+
+    public async void RemoveLastCoffee(Member member) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            var lastCoffee = context.Coffees.OrderBy(x => x.CreatedDate).Last();
+            
+            
+            if(lastCoffee != null) {
+                Console.WriteLine("### ### DELETET ITEM ### ###");
+                Console.WriteLine($"Created: {lastCoffee.CreatedDate}");
+                Console.WriteLine($"Created: {lastCoffee.Member.Name}");
+                context.Coffees.Remove(lastCoffee);
+                await context.SaveChangesAsync();
+            } else
+                Console.WriteLine("### ### Cannot fnd the last one ### ###");
+        }
+    }
 }

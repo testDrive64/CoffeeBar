@@ -25,7 +25,14 @@ public class PayInfoService {
             return context.PayInfos.ToList<PayInfo>();
         }
     }
-    public PayInfo GetPayInfo(Member member) {
+
+    public List<PayInfo>GetPayInfos(Member member) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            return context.PayInfos.ToList<PayInfo>().Where(x => x.MemberId == member.Id).ToList<PayInfo>();
+        }
+    }
+    
+    public PayInfo GetLastPayInfo(Member member) {
 
         using(var context = _dbContextFactory.CreateDbContext()) {
             var membersPayInfo = context.PayInfos
@@ -40,7 +47,7 @@ public class PayInfoService {
     }
 
     public DateTime GetLastPayDate(Member member) {
-        PayInfo payInfo = GetPayInfo(member);
+        PayInfo payInfo = GetLastPayInfo(member);
         return payInfo.Created;
     }
 
