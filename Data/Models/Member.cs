@@ -16,4 +16,5 @@ public class Member {
     }
     public DateTime CreatedDate { get; set; }
     public List<Coffee>? Coffees { get; set; }
+    public List<Gelato>? Gelatos { get; set; }
 } 

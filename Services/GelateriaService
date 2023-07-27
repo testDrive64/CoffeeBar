@@ -1,0 +1,81 @@
+using CoffeeBar.Data.Models;
+using CoffeeBar.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+
+namespace CoffeeBar.Services;
+
+public class GelatoService {
+    
+    private PayInfoService payInfoService = null;
+    private IDbContextFactory<CoffeesContext> _dbContextFactory;
+
+    public GelatoService (IDbContextFactory<CoffeesContext> dbContext) {
+        _dbContextFactory = dbContext;
+        payInfoService = new PayInfoService(dbContext);
+    }
+
+    public List<Gelato> GetGelatos(Member member) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            return context.Gelatos.Where(x => x.Member.Id == member.Id).ToList();
+        }
+    }
+    public List<Gelato> GetGelatosById(int id) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            return context.Gelatos.Where(x => x.Member.Id == id).ToList();
+        }
+    }
+
+    public int GetAmount(Member member) {
+        return GetGelatos(member).Count();
+    }
+
+    public int GetOpenGelatoAmount(Member member) {
+        return GetGelatos(member).Where(x => x.CreatedDate > payInfoService.GetLastPayDate(member)).Count();
+    }
+
+    public Dictionary<DateTime, int> GetDailyGelatoAmount(Member member) {
+        Dictionary<DateTime, int> timeAmountDict = new Dictionary<DateTime, int>();
+        foreach (Gelato gelato in this.GetGelatos(member)) {
+            if (timeAmountDict.ContainsKey(gelato.CreatedDate.Date)) {
+                int oldAmount = timeAmountDict[gelato.CreatedDate.Date];
+                timeAmountDict[gelato.CreatedDate.Date] = oldAmount + 1;
+            } else {
+                timeAmountDict.Add(gelato.CreatedDate.Date, 1);
+            }
+        }
+        return timeAmountDict;
+    }
+
+    public async void AddGelato(Member member) {
+        var newGelato = new Gelato();
+        newGelato.CreatedDate = DateTime.Now;
+        newGelato.Member = member;
+        newGelato.MemberObjID = member.ObjID;
+
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            //context.Coffees.Add(newCoffee);
+            if (member.Gelatos == null) { member.Gelatos = new List<Gelato>(); }
+            member.Gelatos.Add(newGelato);
+            context.Gelatos.Add(newGelato);
+            context.Update(member);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async void RemoveLastGelato(Member member) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            var lastGelato = context.Gelatos.OrderBy(x => x.CreatedDate).Last();
+            
+            
+            if(lastGelato != null) {
+                Console.WriteLine("### ### DELETET ITEM ### ###");
+                Console.WriteLine($"Created: {lastGelato.CreatedDate}");
+                Console.WriteLine($"Created: {lastGelato.Member.Name}");
+                context.Gelatos.Remove(lastGelato);
+                await context.SaveChangesAsync();
+            } else
+                Console.WriteLine("### ### Cannot fnd the last one ### ###");
+        }
+    }
+}

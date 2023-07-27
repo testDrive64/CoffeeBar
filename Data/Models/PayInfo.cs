@@ -9,6 +9,8 @@ public class PayInfo {
     public Member Member{ get; set; }
     public double Amount{ get; set; }
     public double CurrentCoffeePrice{ get; set; }
+    public double CurrentGelatoPrice{ get; set; }
+    public double CurrentHighGelatoPrice{ get; set; }
 
 
     public PayInfo() {
