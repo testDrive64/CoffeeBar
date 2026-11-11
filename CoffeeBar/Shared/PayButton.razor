@@ -3,7 +3,7 @@
 @inject MemberService memberService;
 @inject CoffeeService coffeeService;
 @inject GelatoService gelatoService;
-@inject IJSRuntime js;
+@inject DialogService dialogService;
 
 @* Pays all open coffees and gelatos of a member together, after a confirmation. *@
 <button class="cb-btn cb-btn-primary cb-btn-pay" @onclick="Pay" aria-label="Pay for @member.Name">
@@ -20,13 +20,25 @@
         int openCoffees = coffeeService.GetOpenCoffeeAmount(member);
         int openGelatos = gelatoService.GetOpenGelatoAmount(member);
         if (openCoffees == 0 && openGelatos == 0) {
-            await js.InvokeVoidAsync("alert", $"{member.Name} has nothing to pay.");
+            await dialogService.AlertAsync("Nothing to pay", $"{member.Name} has no open coffees or gelatos.");
             return;
         }
 
-        double total = Math.Round(openCoffees * memberService.CoffeePrice + openGelatos * memberService.GelatoPrice, 2);
-        bool confirmed = await js.InvokeAsync<bool>("confirm",
-            $"{member.Name}: pay {openCoffees} coffee(s) and {openGelatos} gelato(s) for {total:0.00} €?");
+        double coffeeCost = openCoffees * memberService.CoffeePrice;
+        double gelatoCost = openGelatos * memberService.GelatoPrice;
+        var details = new List<DialogDetail>();
+        if (openCoffees > 0)
+            details.Add(new DialogDetail($"{openCoffees} × Coffee", $"{coffeeCost:0.00} €"));
+        if (openGelatos > 0)
+            details.Add(new DialogDetail($"{openGelatos} × Gelato", $"{gelatoCost:0.00} €"));
+
+        bool confirmed = await dialogService.ConfirmAsync(new DialogOptions {
+            Title = $"Pay for {member.Name}?",
+            Details = details,
+            Summary = new DialogDetail("Total", $"{Math.Round(coffeeCost + gelatoCost, 2):0.00} €"),
+            ConfirmText = "Pay now",
+            CancelText = "Cancel"
+        });
         if (!confirmed)
             return;
 

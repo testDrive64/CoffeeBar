@@ -17,6 +17,7 @@ builder.Services.AddTransient<MemberService>();
 builder.Services.AddTransient<CoffeeService>();
 builder.Services.AddTransient<GelatoService>();
 builder.Services.AddTransient<PayInfoService>();
+builder.Services.AddScoped<DialogService>();
 
 builder.Services.AddDbContextFactory<CoffeesContext>((DbContextOptionsBuilder options) => 
     options.UseSqlite(connectionString)

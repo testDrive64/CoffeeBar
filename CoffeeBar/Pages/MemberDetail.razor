@@ -9,7 +9,7 @@
 @inject GelatoService gelatoService
 @inject PayInfoService payInfoService
 @inject NavigationManager navManager
-@inject IJSRuntime js
+@inject DialogService dialogService
 
 @layout SampleLayout
 
@@ -168,12 +168,24 @@ else
         if (member == null || HasOpenCosts)
             return;
 
-        bool confirmed = await js.InvokeAsync<bool>("confirm",
-            $"Delete {member.Name} with {coffees.Count} coffee(s), {gelatoCount} gelato(s) and {payDates.Count} payment(s)? This cannot be undone.");
+        var memberId = member.Id;
+        var memberName = member.Name;
+        bool confirmed = await dialogService.ConfirmAsync(new DialogOptions {
+            Title = $"Delete {memberName}?",
+            Message = "The member is deleted together with all entries. This cannot be undone.",
+            Details = new List<DialogDetail> {
+                new("Coffees", coffees.Count.ToString()),
+                new("Gelatos", gelatoCount.ToString()),
+                new("Payments", payDates.Count.ToString())
+            },
+            ConfirmText = "Delete member",
+            CancelText = "Cancel",
+            Kind = DialogKind.Danger
+        });
         if (!confirmed)
             return;
 
-        switch (memberService.DeleteMember(member.Id)) {
+        switch (memberService.DeleteMember(memberId)) {
             case DeleteMemberResult.Deleted:
             case DeleteMemberResult.NotFound:
                 navManager.NavigateTo("coffeelist");
@@ -181,7 +193,7 @@ else
             case DeleteMemberResult.HasOpenCosts:
                 // Someone added a coffee or gelato in the meantime.
                 LoadData();
-                deleteError = $"{member?.Name} has open costs again. Pay first, then delete.";
+                deleteError = $"{memberName} has open costs again. Pay first, then delete.";
                 break;
         }
     }
