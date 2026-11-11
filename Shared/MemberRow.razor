@@ -1,0 +1,60 @@
+@using CoffeeBar.Data.Models
+
+@* One touch friendly row of a member, used by the coffee list and the gelateria (inside the list of CoffeeList and GelatoList). *@
+<div class="cb-row @(Open > 0 ? "is-open" : "")">
+    <a class="cb-row-member" href="memberdetails/@Member.Id">
+        <span class="cb-avatar">@Initial</span>
+        <span class="cb-row-text">
+            <span class="cb-member-name">@Member.Name</span>
+            <span class="cb-member-sub">@(LastPayDate == DateTime.MinValue ? "Never paid" : $"Paid {LastPayDate.ToGermanDateTime()}")</span>
+        </span>
+    </a>
+    <div class="cb-row-num cb-row-open">
+        <span class="cb-cell-label">Open</span>
+        <span class="cb-row-value">@Open</span>
+    </div>
+    <div class="cb-row-num">
+        <span class="cb-cell-label">To pay</span>
+        <span class="cb-row-value">@Cost.ToString("0.00") €</span>
+    </div>
+    <div class="cb-row-num cb-row-total">
+        <span class="cb-cell-label">Total</span>
+        <span class="cb-row-value">@Total</span>
+    </div>
+    <div class="cb-row-actions">
+        <button class="cb-btn cb-btn-outline cb-btn-remove" @onclick="OnRemove" disabled="@(Open == 0)"
+                aria-label="Remove last @ItemName of @Member.Name">
+            <Icon Name="minus" />
+        </button>
+        <button class="cb-btn cb-btn-coffee cb-btn-add" @onclick="OnAdd"
+                aria-label="Add @ItemName for @Member.Name">
+            <Icon Name="plus" /> <Icon Name="@IconName" /> @ItemName
+        </button>
+        <PayButton member="Member" OnPaid="OnPaid" />
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Member Member { get; set; } = null!;
+    [Parameter, EditorRequired]
+    public string ItemName { get; set; } = "";
+    [Parameter, EditorRequired]
+    public string IconName { get; set; } = "";
+    [Parameter]
+    public int Total { get; set; }
+    [Parameter]
+    public int Open { get; set; }
+    [Parameter]
+    public double Cost { get; set; }
+    [Parameter]
+    public DateTime LastPayDate { get; set; }
+    [Parameter]
+    public EventCallback OnAdd { get; set; }
+    [Parameter]
+    public EventCallback OnRemove { get; set; }
+    [Parameter]
+    public EventCallback OnPaid { get; set; }
+
+    private string Initial => string.IsNullOrWhiteSpace(Member.Name) ? "?" : Member.Name.Trim()[..1].ToUpper();
+}

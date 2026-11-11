@@ -1,5 +1,3 @@
-using MongoDB.Driver;
-using MongoDB.Bson;
 using CoffeeBar.Data.Models;
 using CoffeeBar.Data;
 using Microsoft.EntityFrameworkCore;
@@ -40,52 +38,38 @@ public class MemberService {
         }
     }
 
-    public void UpdateMemberByName(int id, string name, int amountCoffee) {
-        var customer = GetMember(id);
-        if(customer == null) {
-            throw new Exception("Member does not exist. Cannot update this member");
-        }
-
-        //customer.AmountCoffee = amountCoffee;
-        using(var context = _dbContextFactory.CreateDbContext()) {
-            context.Update(customer);
-            context.SaveChanges();
+    public double CoffeePrice {
+        get {
+            using(var context = _dbContextFactory.CreateDbContext()) {
+                return context.CurrentCoffeePrice;
+            }
         }
     }
 
-    public void Pay(Member member, int paidCoffees) {
-
-        PayInfo payInfo = new PayInfo(member);
-        var currentPrice = 0.0;
-        using(var context = _dbContextFactory.CreateDbContext()) {
-            currentPrice = context.CurrentPrice;
-        }
-        payInfo.Created = DateTime.Now;
-        // payInfo.Member = member;
-        payInfo.MemberId = member.Id;
-        payInfo.Amount = paidCoffees;
-        payInfo.CurrentCoffeePrice = paidCoffees * currentPrice;
-        if(payInfo == null) {
-            throw new Exception("The PayInfo is nothing.");
-        }
-        
-        // payInfoService.Add(payInfo);
-        if (member.PayInfos == null)
-            member.PayInfos = new List<PayInfo>();
-        member.PayInfos.Add(payInfo);
-
-         using(var context = _dbContextFactory.CreateDbContext()) {
-            //  context.PayInfos.Add(payInfo);
-             context.Members.Update(member);
-             context.SaveChanges();
+    public double GelatoPrice {
+        get {
+            using(var context = _dbContextFactory.CreateDbContext()) {
+                return context.CurrentGelatoPrice;
+            }
         }
     }
 
-    public DateTime GetLastPayDate(int memberId) {
+    // Pays all open coffees and gelatos of the member with one PayInfo.
+    public void Pay(Member member, int paidCoffees, int paidGelatos) {
+        if (paidCoffees <= 0 && paidGelatos <= 0)
+            return;
+
         using(var context = _dbContextFactory.CreateDbContext()) {
-            context.PayInfos.Where(x => x.MemberId == memberId);
+            PayInfo payInfo = new PayInfo();
+            payInfo.Created = DateTime.Now;
+            payInfo.MemberId = member.Id;
+            payInfo.Amount = paidCoffees;
+            // Hold the total prices of the paid coffees and gelatos.
+            payInfo.CurrentCoffeePrice = paidCoffees * context.CurrentCoffeePrice;
+            payInfo.CurrentGelatoPrice = paidGelatos * context.CurrentGelatoPrice;
+
+            context.PayInfos.Add(payInfo);
             context.SaveChanges();
         }
-        return DateTime.Now;
     }
 }

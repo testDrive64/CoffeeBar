@@ -1,0 +1,49 @@
+@* Inline stroke icons, colored via currentColor. *@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="@Size" height="@Size" aria-hidden="true" class="cb-icon @Class">
+    @switch (Name)
+    {
+        case "cup":
+            <path d="M4 9h13v5a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V9z" />
+            <path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17" />
+            <path class="cb-steam" d="M8 2.5c-.8 1 .8 2 0 3M11.5 2.5c-.8 1 .8 2 0 3M15 2.5c-.8 1 .8 2 0 3" />
+            break;
+        case "gelato":
+            <path d="M7.5 11 12 22l4.5-11" />
+            <path d="M6.5 11a5.5 5.5 0 1 1 11 0z" />
+            <path d="M9.5 6.5a3 3 0 0 1 2.5-1.5" />
+            break;
+        case "home":
+            <path d="M3 11.5 12 4l9 7.5" />
+            <path d="M5.5 10v10h13V10" />
+            <path d="M10 20v-5h4v5" />
+            break;
+        case "user-add":
+            <circle cx="9.5" cy="8" r="4" />
+            <path d="M2.5 20a7 7 0 0 1 14 0" />
+            <path d="M19 8v6M16 11h6" />
+            break;
+        case "plus":
+            <path d="M12 5v14M5 12h14" />
+            break;
+        case "minus":
+            <path d="M5 12h14" />
+            break;
+        case "pay":
+            <rect x="2.5" y="6" width="19" height="12" rx="2" />
+            <circle cx="12" cy="12" r="2.5" />
+            <path d="M6 9.5v5M18 9.5v5" />
+            break;
+        case "back":
+            <path d="M15 5l-7 7 7 7" />
+            break;
+    }
+</svg>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = "";
+    [Parameter]
+    public int Size { get; set; } = 24;
+    [Parameter]
+    public string? Class { get; set; }
+}

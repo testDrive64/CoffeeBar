@@ -6,8 +6,8 @@ using System.Linq;
 namespace CoffeeBar.Services;
 
 public class CoffeeService {
-    
-    private PayInfoService payInfoService = null;
+
+    private PayInfoService payInfoService;
     private IDbContextFactory<CoffeesContext> _dbContextFactory;
 
     public CoffeeService (IDbContextFactory<CoffeesContext> dbContext) {
@@ -16,22 +16,32 @@ public class CoffeeService {
     }
 
     public List<Coffee> GetCoffees(Member member) {
-        using(var context = _dbContextFactory.CreateDbContext()) {
-            return context.Coffees.Where(x => x.Member.Id == member.Id).ToList();
-        }
+        return GetCoffeesById(member.Id);
     }
     public List<Coffee> GetCoffeesById(int id) {
         using(var context = _dbContextFactory.CreateDbContext()) {
-            return context.Coffees.Where(x => x.Member.Id == id).ToList();
+            return context.Coffees.Where(x => x.MemberId == id).OrderBy(x => x.CreatedDate).ToList();
         }
     }
 
     public int GetCoffeeAmount(Member member) {
-        return GetCoffees(member).Count();
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            return context.Coffees.Count(x => x.MemberId == member.Id);
+        }
+    }
+
+    // Counts the coffees of all members since the given date.
+    public int GetCoffeeAmountSince(DateTime since) {
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            return context.Coffees.Count(x => x.CreatedDate >= since);
+        }
     }
 
     public int GetOpenCoffeeAmount(Member member) {
-        return GetCoffees(member).Where(x => x.CreatedDate > payInfoService.GetLastPayDate(member)).Count();
+        var lastPayDate = payInfoService.GetLastPayDate(member);
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            return context.Coffees.Count(x => x.MemberId == member.Id && x.CreatedDate > lastPayDate);
+        }
     }
 
     public Dictionary<DateTime, int> GetDailyCoffeeAmount(Member member) {
@@ -47,35 +57,31 @@ public class CoffeeService {
         return timeAmountDict;
     }
 
-    public async void AddCoffee(Member member) {
+    public async Task AddCoffee(Member member) {
         var newCoffee = new Coffee();
         newCoffee.CreatedDate = DateTime.Now;
-        newCoffee.Member = member;
+        newCoffee.MemberId = member.Id;
         newCoffee.MemberObjID = member.ObjID;
 
         using(var context = _dbContextFactory.CreateDbContext()) {
-            //context.Coffees.Add(newCoffee);
-            if (member.Coffees == null) { member.Coffees = new List<Coffee>(); }
-            member.Coffees.Add(newCoffee);
             context.Coffees.Add(newCoffee);
-            context.Update(member);
             await context.SaveChangesAsync();
         }
     }
 
-    public async void RemoveLastCoffee(Member member) {
+    // Removes the member's latest coffee that has not been paid yet.
+    public async Task RemoveLastCoffee(Member member) {
+        var lastPayDate = payInfoService.GetLastPayDate(member);
         using(var context = _dbContextFactory.CreateDbContext()) {
-            var lastCoffee = context.Coffees.OrderBy(x => x.CreatedDate).Last();
-            
-            
+            var lastCoffee = context.Coffees
+                                .Where(x => x.MemberId == member.Id && x.CreatedDate > lastPayDate)
+                                .OrderBy(x => x.CreatedDate)
+                                .LastOrDefault();
+
             if(lastCoffee != null) {
-                Console.WriteLine("### ### DELETET ITEM ### ###");
-                Console.WriteLine($"Created: {lastCoffee.CreatedDate}");
-                Console.WriteLine($"Created: {lastCoffee.Member.Name}");
                 context.Coffees.Remove(lastCoffee);
                 await context.SaveChangesAsync();
-            } else
-                Console.WriteLine("### ### Cannot fnd the last one ### ###");
+            }
         }
     }
 }

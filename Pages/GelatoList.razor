@@ -1,0 +1,43 @@
+@page "/gelateria"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+
+<PageTitle>Gelateria · CoffeeBar</PageTitle>
+
+<div class="cb-page-head">
+    <div>
+        <h1><Icon Name="gelato" Size="28" /> Gelateria</h1>
+        <p>Tap <strong>+ Gelato</strong> for every scoop. <strong>Pay</strong> settles coffee and gelato together.</p>
+    </div>
+    <a class="cb-btn cb-btn-outline" href="addmember"><Icon Name="user-add" /> Add member</a>
+</div>
+
+@if (team.Count == 0)
+{
+    <div class="cb-card"><p class="cb-empty">No members yet. Add the first one to start the gelateria.</p></div>
+}
+else
+{
+    <div class="cb-list">
+        <div class="cb-list-head">
+            <span>Member</span>
+            <span class="num">Open</span>
+            <span class="num">To pay</span>
+            <span class="num">Total</span>
+            <span class="actions">Actions</span>
+        </div>
+        @foreach (var member in team)
+        {
+            <GelatoListItem @key="member.Id" member=member />
+        }
+    </div>
+}
+
+@code {
+    private List<Member> team = new();
+
+    protected override void OnInitialized() {
+        team = memberService.GetMembers().OrderBy(x => x.Name).ToList();
+    }
+}

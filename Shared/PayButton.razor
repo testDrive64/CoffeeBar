@@ -1,0 +1,36 @@
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+@inject CoffeeService coffeeService;
+@inject GelatoService gelatoService;
+@inject IJSRuntime js;
+
+@* Pays all open coffees and gelatos of a member together, after a confirmation. *@
+<button class="cb-btn cb-btn-primary cb-btn-pay" @onclick="Pay" aria-label="Pay for @member.Name">
+    <Icon Name="pay" /> Pay
+</button>
+
+@code {
+    [Parameter, EditorRequired]
+    public Member member { get; set; } = null!;
+    [Parameter]
+    public EventCallback OnPaid { get; set; }
+
+    private async Task Pay() {
+        int openCoffees = coffeeService.GetOpenCoffeeAmount(member);
+        int openGelatos = gelatoService.GetOpenGelatoAmount(member);
+        if (openCoffees == 0 && openGelatos == 0) {
+            await js.InvokeVoidAsync("alert", $"{member.Name} has nothing to pay.");
+            return;
+        }
+
+        double total = Math.Round(openCoffees * memberService.CoffeePrice + openGelatos * memberService.GelatoPrice, 2);
+        bool confirmed = await js.InvokeAsync<bool>("confirm",
+            $"{member.Name}: pay {openCoffees} coffee(s) and {openGelatos} gelato(s) for {total:0.00} €?");
+        if (!confirmed)
+            return;
+
+        memberService.Pay(member, openCoffees, openGelatos);
+        await OnPaid.InvokeAsync();
+    }
+}

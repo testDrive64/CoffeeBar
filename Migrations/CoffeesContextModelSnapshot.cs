@@ -42,6 +42,31 @@ namespace CoffeeBar.Migrations
                     b.ToTable("Coffees");
                 });
 
+            modelBuilder.Entity("CoffeeBar.Data.Models.Gelato", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MemberObjID")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ObjID")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("Gelatos");
+                });
+
             modelBuilder.Entity("CoffeeBar.Data.Models.Member", b =>
                 {
                     b.Property<int>("Id")
@@ -77,6 +102,12 @@ namespace CoffeeBar.Migrations
                     b.Property<double>("CurrentCoffeePrice")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("CurrentGelatoPrice")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("CurrentHighGelatoPrice")
+                        .HasColumnType("REAL");
+
                     b.Property<int>("MemberId")
                         .HasColumnType("INTEGER");
 
@@ -98,6 +129,17 @@ namespace CoffeeBar.Migrations
                     b.Navigation("Member");
                 });
 
+            modelBuilder.Entity("CoffeeBar.Data.Models.Gelato", b =>
+                {
+                    b.HasOne("CoffeeBar.Data.Models.Member", "Member")
+                        .WithMany("Gelatos")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
             modelBuilder.Entity("CoffeeBar.Data.Models.PayInfo", b =>
                 {
                     b.HasOne("CoffeeBar.Data.Models.Member", "Member")
@@ -112,6 +154,8 @@ namespace CoffeeBar.Migrations
             modelBuilder.Entity("CoffeeBar.Data.Models.Member", b =>
                 {
                     b.Navigation("Coffees");
+
+                    b.Navigation("Gelatos");
 
                     b.Navigation("PayInfos");
                 });

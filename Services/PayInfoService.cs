@@ -28,7 +28,7 @@ public class PayInfoService {
 
     public List<PayInfo>GetPayInfos(Member member) {
         using(var context = _dbContextFactory.CreateDbContext()) {
-            return context.PayInfos.ToList<PayInfo>().Where(x => x.MemberId == member.Id).ToList<PayInfo>();
+            return context.PayInfos.Where(x => x.MemberId == member.Id).OrderBy(x => x.Created).ToList<PayInfo>();
         }
     }
     

@@ -2,8 +2,10 @@
 @layout MainLayout
 @inject NavigationManager navigationManager
 
-<button @onclick="NavigateToOverview" style="margin-bottom: 5px;">Back to the overview</button>
-<div style="width:75%;">
+<button class="cb-btn cb-btn-outline" @onclick="NavigateToOverview" style="margin-bottom: 1.25rem;">
+    <Icon Name="back" /> Back to the overview
+</button>
+<div>
     @Body
 </div>
 

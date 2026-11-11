@@ -1,177 +1,213 @@
 @page "/memberdetails/{id:int}"
-@using System
-@using System.Collections.Generic
 @using CoffeeBar.Services
 @using CoffeeBar.Data.Models
 @using ChartJs.Blazor.LineChart
-@using ChartJs.Blazor.BarChart
 @using ChartJs.Blazor.Common.Axes
 @using ChartJs.Blazor.Common.Time
 @inject MemberService memberService
 @inject CoffeeService coffeeService
+@inject GelatoService gelatoService
 @inject PayInfoService payInfoService
-@implements IDisposable
 
 @layout SampleLayout
 
-<style>
-table {
-  font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 60%;
-  }
+<PageTitle>@member.Name · CoffeeBar</PageTitle>
 
-  td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-  }
+<div class="cb-page-head">
+    <div>
+        <h1><Icon Name="cup" Size="28" /> @member.Name</h1>
+        <p>Member since @member.CreatedDate.ToGermanDate()</p>
+    </div>
+</div>
 
-  tr:nth-child(even) {
-    background-color: #dddddd;
-  }
-</style>
+<div class="cb-stats">
+    <div class="cb-card">
+        <div class="cb-stat-value">@coffees.Count</div>
+        <div class="cb-stat-label">coffees in total</div>
+    </div>
+    <div class="cb-card">
+        <div class="cb-stat-value">@openCoffees</div>
+        <div class="cb-stat-label">coffees open</div>
+    </div>
+    <div class="cb-card">
+        <div class="cb-stat-value">@gelatoCount</div>
+        <div class="cb-stat-label">gelatos in total</div>
+    </div>
+    <div class="cb-card">
+        <div class="cb-stat-value">@totalPaid.ToString("0.00") €</div>
+        <div class="cb-stat-label">paid in total</div>
+    </div>
+</div>
 
-<table>
-    <th>Date</th>
-    <th>Amount</th>
-    @foreach (var coffee in dates)
+<div class="cb-card">
+    <h2>Coffees per day and paid coffees</h2>
+    @if (dates.Count == 0 && payDates.Count == 0)
     {
-        <tr>
-            <td>@coffee.Key.ToShortDateString()</td>
-            <td>@coffee.Value</td>
-        </tr>   
+        <p class="cb-empty">No coffees yet.</p>
     }
-</table>
-<table>
-    <th>Date</th>
-    <th>Price (€)</th>
-    @foreach (var payDate in payDates)
+    else
     {
-        <tr>
-            <td>@payDate.Created.ToShortDateString()</td>
-            <td>@payDate.Amount.ToString()</td>
-        </tr>   
+        <Chart Config="_config"></Chart>
     }
-</table>
+</div>
 
-
-<Chart Config="_config"></Chart>
+<div class="cb-detail-grid">
+    <div class="cb-card">
+        <h2>Coffees per day</h2>
+        @if (dates.Count == 0)
+        {
+            <p class="cb-empty">No coffees yet.</p>
+        }
+        else
+        {
+            <table class="cb-table">
+                <thead>
+                    <tr><th>Date</th><th class="num">Coffee(s)</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var day in dates.Reverse())
+                    {
+                        <tr>
+                            <td>@day.Key.ToGermanDate()</td>
+                            <td class="num">@day.Value</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+    <div class="cb-card">
+        <h2>Payments</h2>
+        @if (payDates.Count == 0)
+        {
+            <p class="cb-empty">No payments yet.</p>
+        }
+        else
+        {
+            <table class="cb-table">
+                <thead>
+                    <tr><th>Date</th><th class="num">Coffee(s)</th><th class="num">Price (€)</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var payDate in Enumerable.Reverse(payDates))
+                    {
+                        <tr>
+                            <td>@payDate.Created.ToGermanDate()</td>
+                            <td class="num">@payDate.Amount</td>
+                            <td class="num">@((payDate.CurrentCoffeePrice + payDate.CurrentGelatoPrice).ToString("0.00"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
 
 @code {
     [Parameter] public int Id { get; set; }
-    public Member member { 
-        get {
-            return memberService.GetMember(Id);
-        }
-    }
 
-    public List<Coffee> coffees {
-        get {
-            return coffeeService.GetCoffeesById(Id);
-        }    
-    }
+    private Member member = null!;
+    private List<Coffee> coffees = new();
+    private Dictionary<DateTime, int> dates = new();
+    private List<PayInfo> payDates = new();
+    private int openCoffees;
+    private int gelatoCount;
+    private double totalPaid;
+    private LineConfig _config = null!;
 
+    // Validated chart colors (see --coffee-chart / --brand-chart in site.css)
+    private const string CoffeeColor = "#B06A2C";
+    private const string PayColor = "#1F5BB5";
+    private const string GridColor = "rgba(30, 36, 48, 0.08)";
 
-    public Dictionary<DateTime, int> dates {
-        get {
-            return coffeeService.GetDailyCoffeeAmount(member);
-        }    
-    } 
+    protected override void OnParametersSet() {
+        member = memberService.GetMember(Id);
+        coffees = coffeeService.GetCoffeesById(Id);
+        dates = coffeeService.GetDailyCoffeeAmount(member);
+        payDates = payInfoService.GetPayInfos(member);
+        openCoffees = coffeeService.GetOpenCoffeeAmount(member);
+        gelatoCount = gelatoService.GetAmount(member);
+        totalPaid = payDates.Sum(x => x.CurrentCoffeePrice + x.CurrentGelatoPrice);
 
-    public List<PayInfo> payDates {
-        get {
-            return payInfoService.GetPayInfos(member);
-        }    
-    }
-    CancellationTokenSource pollingCancellationToken;
-    private const int InitalCount = 7;
-    private LineConfig _config;
-
-    protected override void OnInitialized() {
         _config = new LineConfig
         {
             Options = new LineOptions
             {
                 Responsive = true,
-                Title = new OptionsTitle
+                Legend = new Legend
                 {
-                    Display = true,
-                    Text = "Daily Coffee and Paid Coffee"
+                    Position = Position.Top,
+                    Labels = new LegendLabels { UsePointStyle = true, FontColor = "#1E2430" }
                 },
                 Tooltips = new Tooltips
                 {
                     Mode = InteractionMode.Nearest,
-                    Intersect = true
+                    Intersect = false
                 },
                 Hover = new Hover
                 {
                     Mode = InteractionMode.Nearest,
-                    Intersect = true
+                    Intersect = false
                 },
                 Scales = new Scales() {
                     XAxes = new List<CartesianAxis>() {
                         new TimeAxis {
-                            ScaleLabel = new ScaleLabel {
-                                LabelString = "Date"
-                            },
                             Time = new TimeOptions {
-                                TooltipFormat = "ll HH:mm"
+                                Unit = TimeMeasurement.Day,
+                                TooltipFormat = DateFormats.ChartDate,
+                                DisplayFormats = new Dictionary<TimeMeasurement, string> { { TimeMeasurement.Day, DateFormats.ChartDate } }
                             },
+                            GridLines = new GridLines { Display = false },
+                            Ticks = new TimeTicks { FontColor = "#5B6573" }
                         }
                     },
                     YAxes = new List<CartesianAxis>() {
                         new LinearCartesianAxis {
                             ScaleLabel = new ScaleLabel {
-                                LabelString = "Value"
-                            }
+                                Display = true,
+                                LabelString = "Coffees",
+                                FontColor = "#5B6573"
+                            },
+                            GridLines = new GridLines { Color = GridColor, ZeroLineColor = GridColor },
+                            Ticks = new LinearCartesianTicks { BeginAtZero = true, Precision = 0, FontColor = "#5B6573" }
                         }
                     }
                 }
             }
         };
 
-        var dateList = new List<DateTime>();
-        foreach (DateTime date in coffeeService.GetDailyCoffeeAmount(member).Keys) {
-            if (!dateList.Contains(date.Date))
-                dateList.Add(date.Date);
-        }
-
-        foreach(PayInfo thisPayInfo in payInfoService.GetPayInfos(member)){
-            if (!dateList.Contains(thisPayInfo.Created.Date))
-                dateList.Add(thisPayInfo.Created.Date);
-        }
-        foreach(var date in dateList.Order<DateTime>().ToList()) {
-            Console.WriteLine($"### ### {date.ToString("o")} ### ###");
-            _config.Data.Labels.Add(date.ToString("o"));
-        }
-
-
-        IDataset<TimePoint> dataset1 = new LineDataset<TimePoint>() {
-            Label = "Daily Amount Data",
-            BackgroundColor = ColorUtil.FromDrawingColor(ChartColors.Red),
-            BorderColor = ColorUtil.FromDrawingColor(ChartColors.Red),
+        var dailyDataset = new LineDataset<TimePoint>() {
+            Label = "Coffees per day",
+            BackgroundColor = CoffeeColor,
+            BorderColor = CoffeeColor,
+            BorderWidth = 2,
+            PointRadius = 4,
+            PointHoverRadius = 6,
+            PointHitRadius = 12,
+            LineTension = 0,
             Fill = FillingMode.Disabled
         };
-        foreach(var coffee in coffeeService.GetDailyCoffeeAmount(member)) {
-            dataset1.Add(new TimePoint(coffee.Key, coffee.Value));
+        foreach(var day in dates) {
+            dailyDataset.Add(new TimePoint(day.Key, day.Value));
         }
 
-        IDataset<TimePoint> dataset2 = new LineDataset<TimePoint>() {
-            Label = "Pay Dates",
-            BackgroundColor = ColorUtil.FromDrawingColor(ChartColors.Blue),
-            BorderColor = ColorUtil.FromDrawingColor(ChartColors.Blue),
+        var payDataset = new LineDataset<TimePoint>() {
+            Label = "Paid coffees",
+            BackgroundColor = PayColor,
+            BorderColor = PayColor,
+            BorderWidth = 2,
+            PointRadius = 5,
+            PointHoverRadius = 7,
+            PointHitRadius = 12,
+            PointStyle = PointStyle.RectRot,
+            ShowLine = false,
             Fill = FillingMode.Disabled
         };
-        foreach(var payInfo in payInfoService.GetPayInfos(member)) {
-            dataset2.Add(new TimePoint(payInfo.Created, payInfo.Amount));
+        foreach(var payInfo in payDates) {
+            payDataset.Add(new TimePoint(payInfo.Created, payInfo.Amount));
         }
 
-        _config.Data.Datasets.Add(dataset1);
-        _config.Data.Datasets.Add(dataset2);
-    }
-
-    void IDisposable.Dispose() {
-        pollingCancellationToken?.Cancel();
+        _config.Data.Datasets.Add(dailyDataset);
+        _config.Data.Datasets.Add(payDataset);
     }
 }

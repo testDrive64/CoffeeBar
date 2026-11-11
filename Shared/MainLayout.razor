@@ -3,17 +3,18 @@
 <PageTitle>CoffeeBar</PageTitle>
 
 <div class="page">
-    <div class="sidebar">
+    <header class="app-bar">
+        <a class="brand" href="">
+            <span class="brand-mark"><Icon Name="cup" Size="28" /></span>
+            <span class="brand-text">
+                <span class="brand-name">CoffeeBar</span>
+                <span class="brand-sub">Coffee &amp; Gelato for the team</span>
+            </span>
+        </a>
         <NavMenu />
-    </div>
+    </header>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="/todo" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="content">
+        @Body
     </main>
 </div>
