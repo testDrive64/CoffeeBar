@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The test project lives in a subfolder and must not be compiled into the app -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);CoffeeBar.Tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
