@@ -8,109 +8,147 @@
 @inject CoffeeService coffeeService
 @inject GelatoService gelatoService
 @inject PayInfoService payInfoService
+@inject NavigationManager navManager
+@inject IJSRuntime js
 
 @layout SampleLayout
 
-<PageTitle>@member.Name · CoffeeBar</PageTitle>
+@if (member == null)
+{
+    <PageTitle>Member not found · CoffeeBar</PageTitle>
 
-<div class="cb-page-head">
-    <div>
-        <h1><Icon Name="cup" Size="28" /> @member.Name</h1>
-        <p>Member since @member.CreatedDate.ToGermanDate()</p>
+    <div class="cb-card">
+        <h2>Member not found</h2>
+        <p class="cb-empty">This member does not exist (anymore).</p>
+        <a class="cb-btn cb-btn-primary" href="coffeelist"><Icon Name="cup" /> Back to the coffee list</a>
     </div>
-</div>
+}
+else
+{
+    <PageTitle>@member.Name · CoffeeBar</PageTitle>
 
-<div class="cb-stats">
-    <div class="cb-card">
-        <div class="cb-stat-value">@coffees.Count</div>
-        <div class="cb-stat-label">coffees in total</div>
+    <div class="cb-page-head">
+        <div>
+            <h1><Icon Name="cup" Size="28" /> @member.Name</h1>
+            <p>Member since @member.CreatedDate.ToGermanDate()</p>
+        </div>
     </div>
-    <div class="cb-card">
-        <div class="cb-stat-value">@openCoffees</div>
-        <div class="cb-stat-label">coffees open</div>
-    </div>
-    <div class="cb-card">
-        <div class="cb-stat-value">@gelatoCount</div>
-        <div class="cb-stat-label">gelatos in total</div>
-    </div>
-    <div class="cb-card">
-        <div class="cb-stat-value">@totalPaid.ToString("0.00") €</div>
-        <div class="cb-stat-label">paid in total</div>
-    </div>
-</div>
 
-<div class="cb-card">
-    <h2>Coffees per day and paid coffees</h2>
-    @if (dates.Count == 0 && payDates.Count == 0)
-    {
-        <p class="cb-empty">No coffees yet.</p>
-    }
-    else
-    {
-        <Chart Config="_config"></Chart>
-    }
-</div>
+    <div class="cb-stats">
+        <div class="cb-card">
+            <div class="cb-stat-value">@coffees.Count</div>
+            <div class="cb-stat-label">coffees in total</div>
+        </div>
+        <div class="cb-card">
+            <div class="cb-stat-value">@openCoffees</div>
+            <div class="cb-stat-label">coffees open</div>
+        </div>
+        <div class="cb-card">
+            <div class="cb-stat-value">@gelatoCount</div>
+            <div class="cb-stat-label">gelatos in total</div>
+        </div>
+        <div class="cb-card">
+            <div class="cb-stat-value">@totalPaid.ToString("0.00") €</div>
+            <div class="cb-stat-label">paid in total</div>
+        </div>
+    </div>
 
-<div class="cb-detail-grid">
     <div class="cb-card">
-        <h2>Coffees per day</h2>
-        @if (dates.Count == 0)
+        <h2>Coffees per day and paid coffees</h2>
+        @if (dates.Count == 0 && payDates.Count == 0)
         {
             <p class="cb-empty">No coffees yet.</p>
         }
         else
         {
-            <table class="cb-table">
-                <thead>
-                    <tr><th>Date</th><th class="num">Coffee(s)</th></tr>
-                </thead>
-                <tbody>
-                    @foreach (var day in dates.Reverse())
-                    {
-                        <tr>
-                            <td>@day.Key.ToGermanDate()</td>
-                            <td class="num">@day.Value</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            <Chart Config="_config"></Chart>
         }
     </div>
-    <div class="cb-card">
-        <h2>Payments</h2>
-        @if (payDates.Count == 0)
+
+    <div class="cb-detail-grid">
+        <div class="cb-card">
+            <h2>Coffees per day</h2>
+            @if (dates.Count == 0)
+            {
+                <p class="cb-empty">No coffees yet.</p>
+            }
+            else
+            {
+                <table class="cb-table">
+                    <thead>
+                        <tr><th>Date</th><th class="num">Coffee(s)</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var day in dates.Reverse())
+                        {
+                            <tr>
+                                <td>@day.Key.ToGermanDate()</td>
+                                <td class="num">@day.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+        <div class="cb-card">
+            <h2>Payments</h2>
+            @if (payDates.Count == 0)
+            {
+                <p class="cb-empty">No payments yet.</p>
+            }
+            else
+            {
+                <table class="cb-table">
+                    <thead>
+                        <tr><th>Date</th><th class="num">Coffee(s)</th><th class="num">Price (€)</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var payDate in Enumerable.Reverse(payDates))
+                        {
+                            <tr>
+                                <td>@payDate.Created.ToGermanDate()</td>
+                                <td class="num">@payDate.Amount</td>
+                                <td class="num">@((payDate.CurrentCoffeePrice + payDate.CurrentGelatoPrice).ToString("0.00"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <div class="cb-card cb-danger-zone">
+        <h2>Delete member</h2>
+        @if (HasOpenCosts)
         {
-            <p class="cb-empty">No payments yet.</p>
+            <p>@member.Name still has @openCoffees coffee(s) and @openGelatos gelato(s) open (@openCost.ToString("0.00") €).
+               Pay first, then the member can be deleted.</p>
         }
         else
         {
-            <table class="cb-table">
-                <thead>
-                    <tr><th>Date</th><th class="num">Coffee(s)</th><th class="num">Price (€)</th></tr>
-                </thead>
-                <tbody>
-                    @foreach (var payDate in Enumerable.Reverse(payDates))
-                    {
-                        <tr>
-                            <td>@payDate.Created.ToGermanDate()</td>
-                            <td class="num">@payDate.Amount</td>
-                            <td class="num">@((payDate.CurrentCoffeePrice + payDate.CurrentGelatoPrice).ToString("0.00"))</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            <p>Deletes @member.Name together with all coffees, gelatos and payments. This cannot be undone.</p>
         }
+        @if (deleteError != null)
+        {
+            <div class="cb-form-error" role="alert">@deleteError</div>
+        }
+        <button class="cb-btn cb-btn-danger" @onclick="DeleteMember" disabled="@HasOpenCosts">
+            <Icon Name="trash" /> Delete member
+        </button>
     </div>
-</div>
+}
 
 @code {
     [Parameter] public int Id { get; set; }
 
-    private Member member = null!;
+    private Member? member;
     private List<Coffee> coffees = new();
     private Dictionary<DateTime, int> dates = new();
     private List<PayInfo> payDates = new();
     private int openCoffees;
+    private int openGelatos;
+    private double openCost;
+    private string? deleteError;
     private int gelatoCount;
     private double totalPaid;
     private LineConfig _config = null!;
@@ -120,12 +158,45 @@
     private const string PayColor = "#1F5BB5";
     private const string GridColor = "rgba(30, 36, 48, 0.08)";
 
+    private bool HasOpenCosts => openCoffees > 0 || openGelatos > 0;
+
     protected override void OnParametersSet() {
-        member = memberService.GetMember(Id);
+        LoadData();
+    }
+
+    private async Task DeleteMember() {
+        if (member == null || HasOpenCosts)
+            return;
+
+        bool confirmed = await js.InvokeAsync<bool>("confirm",
+            $"Delete {member.Name} with {coffees.Count} coffee(s), {gelatoCount} gelato(s) and {payDates.Count} payment(s)? This cannot be undone.");
+        if (!confirmed)
+            return;
+
+        switch (memberService.DeleteMember(member.Id)) {
+            case DeleteMemberResult.Deleted:
+            case DeleteMemberResult.NotFound:
+                navManager.NavigateTo("coffeelist");
+                break;
+            case DeleteMemberResult.HasOpenCosts:
+                // Someone added a coffee or gelato in the meantime.
+                LoadData();
+                deleteError = $"{member?.Name} has open costs again. Pay first, then delete.";
+                break;
+        }
+    }
+
+    private void LoadData() {
+        member = memberService.FindMember(Id);
+        if (member == null)
+            return;
+
         coffees = coffeeService.GetCoffeesById(Id);
         dates = coffeeService.GetDailyCoffeeAmount(member);
         payDates = payInfoService.GetPayInfos(member);
         openCoffees = coffeeService.GetOpenCoffeeAmount(member);
+        openGelatos = gelatoService.GetOpenGelatoAmount(member);
+        openCost = Math.Round(openCoffees * memberService.CoffeePrice + openGelatos * memberService.GelatoPrice, 2);
         gelatoCount = gelatoService.GetAmount(member);
         totalPaid = payDates.Sum(x => x.CurrentCoffeePrice + x.CurrentGelatoPrice);
 

@@ -156,6 +156,16 @@ button, .cb-btn, input, a {
     color: var(--brand);
 }
 
+.cb-btn-danger {
+    background: var(--danger);
+    color: #fff;
+}
+
+.cb-btn-danger:hover {
+    background: #8c1d18;
+    color: #fff;
+}
+
 .cb-btn-lg {
     min-height: 72px;
     font-size: 1.35rem;
@@ -504,6 +514,24 @@ button, .cb-btn, input, a {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.25rem;
     margin-top: 1.25rem;
+}
+
+/* ---------- Danger zone ---------- */
+.cb-danger-zone {
+    margin-top: 2rem;
+    border: 2px solid rgba(179, 38, 30, .25);
+}
+
+.cb-danger-zone h2 {
+    color: var(--danger);
+}
+
+.cb-danger-zone p {
+    color: var(--text-muted);
+}
+
+.cb-danger-zone .cb-form-error {
+    margin: 0 0 1rem;
 }
 
 /* ---------- Forms ---------- */

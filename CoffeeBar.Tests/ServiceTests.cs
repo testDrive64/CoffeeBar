@@ -201,6 +201,76 @@ public class ServiceTests : IDisposable
         Assert.Equal(3 * _members.GelatoPrice, payInfo.CurrentGelatoPrice, 6);
     }
 
+    // ---------- Delete member ----------
+
+    [Fact]
+    public async Task DeleteMember_WithOpenCoffee_DeletesNothing()
+    {
+        var a = NewMember("A");
+        await _coffees.AddCoffee(a);
+
+        Assert.Equal(DeleteMemberResult.HasOpenCosts, _members.DeleteMember(a.Id));
+
+        Assert.NotNull(_members.FindMember(a.Id));
+        Assert.Equal(1, _coffees.GetCoffeeAmount(a));
+    }
+
+    [Fact]
+    public async Task DeleteMember_WithOpenGelato_DeletesNothing()
+    {
+        var a = NewMember("A");
+        await _coffees.AddCoffee(a);
+        _members.Pay(a, 1, 0);
+        await Task.Delay(5);
+        await _gelatos.AddGelato(a); // only the gelato is open
+
+        Assert.Equal(DeleteMemberResult.HasOpenCosts, _members.DeleteMember(a.Id));
+
+        Assert.NotNull(_members.FindMember(a.Id));
+        Assert.Equal(1, _gelatos.GetAmount(a));
+        Assert.Single(_payInfos.GetPayInfos(a));
+    }
+
+    [Fact]
+    public async Task DeleteMember_AllPaid_DeletesMemberAndAllEntries_KeepsOthers()
+    {
+        var a = NewMember("A");
+        var b = NewMember("B");
+        await _coffees.AddCoffee(a);
+        await _gelatos.AddGelato(a);
+        _members.Pay(a, 1, 1);
+        await _coffees.AddCoffee(b);
+        await _gelatos.AddGelato(b);
+
+        Assert.Equal(DeleteMemberResult.Deleted, _members.DeleteMember(a.Id));
+
+        Assert.Null(_members.FindMember(a.Id));
+        using (var context = _factory.CreateDbContext())
+        {
+            Assert.False(context.Coffees.Any(x => x.MemberId == a.Id));
+            Assert.False(context.Gelatos.Any(x => x.MemberId == a.Id));
+            Assert.False(context.PayInfos.Any(x => x.MemberId == a.Id));
+        }
+        Assert.NotNull(_members.FindMember(b.Id));
+        Assert.Equal(1, _coffees.GetCoffeeAmount(b));
+        Assert.Equal(1, _gelatos.GetAmount(b));
+    }
+
+    [Fact]
+    public void DeleteMember_WithoutEntries_IsDeleted()
+    {
+        var a = NewMember("A");
+
+        Assert.Equal(DeleteMemberResult.Deleted, _members.DeleteMember(a.Id));
+        Assert.Null(_members.FindMember(a.Id));
+    }
+
+    [Fact]
+    public void DeleteMember_Unknown_ReturnsNotFound()
+    {
+        Assert.Equal(DeleteMemberResult.NotFound, _members.DeleteMember(4711));
+    }
+
     [Fact]
     public async Task Pay_OnlyGelatos_CreatesPayInfo()
     {
