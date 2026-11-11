@@ -195,7 +195,9 @@ button, .cb-btn, input, a {
    Wide (tablet landscape): one line per member, columns aligned with the header.
    Narrow: numbers on the first line, buttons on a second line. */
 .cb-list {
-    --cb-list-cols: minmax(200px, 1fr) 72px 100px 72px auto;
+    /* Fixed tracks only: header and rows are separate grids and must get identical columns.
+       Actions = remove 64 + add 170 + pay 110 + 2 gaps, rounded up. */
+    --cb-list-cols: minmax(200px, 1fr) 72px 100px 72px 380px;
     background: var(--surface);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -342,6 +344,7 @@ button, .cb-btn, input, a {
 }
 
 .cb-row-actions .cb-btn-add {
+    flex: 1;
     min-width: 170px;
 }
 
