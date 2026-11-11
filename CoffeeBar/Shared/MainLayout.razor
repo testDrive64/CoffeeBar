@@ -1,0 +1,22 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>CoffeeBar</PageTitle>
+
+<div class="page">
+    <header class="app-bar">
+        <a class="brand" href="">
+            <span class="brand-mark"><Icon Name="cup" Size="28" /></span>
+            <span class="brand-text">
+                <span class="brand-name">CoffeeBar</span>
+                <span class="brand-sub">Coffee &amp; Gelato for the team</span>
+            </span>
+        </a>
+        <NavMenu />
+    </header>
+
+    <main class="content">
+        @Body
+    </main>
+</div>
+
+<DialogHost />

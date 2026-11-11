@@ -1,0 +1,66 @@
+﻿@page "/"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+@inject CoffeeService coffeeService;
+@inject GelatoService gelatoService;
+
+<PageTitle>CoffeeBar</PageTitle>
+
+<div class="cb-page-head">
+    <div>
+        <h1>@Greeting</h1>
+        <p>Grab a cup, tap your name, done.</p>
+    </div>
+</div>
+
+<div class="cb-stats">
+    <div class="cb-card">
+        <div class="cb-stat-value">@coffeesToday</div>
+        <div class="cb-stat-label">coffees today</div>
+    </div>
+    <div class="cb-card">
+        <div class="cb-stat-value">@gelatosToday</div>
+        <div class="cb-stat-label">gelatos today</div>
+    </div>
+    <div class="cb-card">
+        <div class="cb-stat-value">@memberCount</div>
+        <div class="cb-stat-label">members</div>
+    </div>
+</div>
+
+<div class="cb-tiles">
+    <a class="cb-tile is-coffee" href="coffeelist">
+        <span class="cb-tile-icon"><Icon Name="cup" Size="36" /></span>
+        <span class="cb-tile-title">Coffee list</span>
+        <span class="cb-tile-text">Add your coffee and see what is open.</span>
+    </a>
+    <a class="cb-tile is-coffee" href="gelateria">
+        <span class="cb-tile-icon"><Icon Name="gelato" Size="36" /></span>
+        <span class="cb-tile-title">Gelateria</span>
+        <span class="cb-tile-text">Track the gelato of the team.</span>
+    </a>
+    <a class="cb-tile" href="addmember">
+        <span class="cb-tile-icon"><Icon Name="user-add" Size="36" /></span>
+        <span class="cb-tile-title">Add member</span>
+        <span class="cb-tile-text">New colleague? Join the coffee bar.</span>
+    </a>
+</div>
+
+@code {
+    private int coffeesToday;
+    private int gelatosToday;
+    private int memberCount;
+
+    private string Greeting => DateTime.Now.Hour switch {
+        < 11 => "Good morning",
+        < 17 => "Coffee time",
+        _ => "Good evening"
+    };
+
+    protected override void OnInitialized() {
+        coffeesToday = coffeeService.GetCoffeeAmountSince(DateTime.Today);
+        gelatosToday = gelatoService.GetGelatoAmountSince(DateTime.Today);
+        memberCount = memberService.GetMembers().Count;
+    }
+}

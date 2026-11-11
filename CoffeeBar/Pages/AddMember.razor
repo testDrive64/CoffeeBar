@@ -1,0 +1,46 @@
+@page "/addmember"
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject NavigationManager navManager;
+@inject MemberService memberService;
+
+<PageTitle>Add member · CoffeeBar</PageTitle>
+
+<div class="cb-page-head">
+    <div>
+        <h1><Icon Name="user-add" Size="28" /> Add member</h1>
+        <p>New colleague at the coffee bar? Enter the name and you are in.</p>
+    </div>
+</div>
+
+<div class="cb-card cb-form">
+    <EditForm Model=@member OnValidSubmit="HandleSubmit">
+        <label for="NameInput">Name</label>
+        <InputText id="NameInput" class="cb-input" placeholder="e.g. Alex" autocomplete="off" @bind-Value=@member.Name></InputText>
+        @if (errorText != null)
+        {
+            <div class="cb-form-error" role="alert">@errorText</div>
+        }
+        <div class="cb-form-actions">
+            <button type="submit" class="cb-btn cb-btn-primary cb-btn-lg"><Icon Name="user-add" /> Create</button>
+            <a class="cb-btn cb-btn-outline cb-btn-lg" href="coffeelist">Cancel</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    Member member = new Member();
+    string? errorText;
+
+    public void HandleSubmit(EditContext editContext) {
+        var newMember = (Member)editContext.Model;
+        if (string.IsNullOrWhiteSpace(newMember.Name)) {
+            errorText = "Please enter a name.";
+            return;
+        }
+        newMember.Name = newMember.Name.Trim();
+        newMember.CreatedDate = DateTime.Now;
+        memberService.AddMember(newMember);
+        navManager.NavigateTo("coffeelist", true);
+    }
+}

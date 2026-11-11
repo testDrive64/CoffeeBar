@@ -1,0 +1,46 @@
+.nav-tabs-cb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.nav-tabs-cb ::deep .nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: var(--touch);
+    padding: 0 1.1rem;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .85);
+    font-weight: 600;
+    font-size: 1.05rem;
+    text-decoration: none;
+    transition: background-color .15s;
+}
+
+.nav-tabs-cb ::deep .nav-tab:hover {
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+}
+
+.nav-tabs-cb ::deep .nav-tab.active {
+    background: #fff;
+    color: var(--brand);
+}
+
+/* Narrow screens: icons on top of the labels, tabs share the width */
+@media (max-width: 900px) {
+    .nav-tabs-cb {
+        width: 100%;
+    }
+
+    .nav-tabs-cb ::deep .nav-tab {
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        gap: .2rem;
+        min-height: 64px;
+        padding: .4rem .25rem;
+        font-size: .85rem;
+    }
+}

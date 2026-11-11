@@ -1,0 +1,81 @@
+@using CoffeeBar.Services
+@inject DialogService dialogService
+@implements IDisposable
+
+@* Shows the dialog of the DialogService. Placed once in the MainLayout. *@
+@if (dialogService.Current is { } options)
+{
+    <div class="cb-dialog-backdrop" @onclick="Cancel">
+        <div class="cb-dialog @(options.Kind == DialogKind.Danger ? "is-danger" : "")"
+             role="dialog" aria-modal="true" aria-labelledby="cb-dialog-title" tabindex="-1"
+             @ref="dialogElement" @onclick:stopPropagation="true" @onkeydown="OnKeyDown">
+            <h2 id="cb-dialog-title">@options.Title</h2>
+            @if (options.Message != null)
+            {
+                <p class="cb-dialog-message">@options.Message</p>
+            }
+            @if (options.Details.Count > 0)
+            {
+                <dl class="cb-dialog-details">
+                    @foreach (var detail in options.Details)
+                    {
+                        <div>
+                            <dt>@detail.Label</dt>
+                            <dd>@detail.Value</dd>
+                        </div>
+                    }
+                </dl>
+            }
+            @if (options.Summary != null)
+            {
+                <div class="cb-dialog-summary">
+                    <span>@options.Summary.Label</span>
+                    <span>@options.Summary.Value</span>
+                </div>
+            }
+            <div class="cb-dialog-actions">
+                @if (options.CancelText != null)
+                {
+                    <button class="cb-btn cb-btn-outline cb-btn-lg cb-dialog-cancel" @onclick="Cancel">@options.CancelText</button>
+                }
+                <button class="cb-btn cb-btn-lg cb-dialog-confirm @(options.Kind == DialogKind.Danger ? "cb-btn-danger" : "cb-btn-primary")"
+                        @onclick="Confirm">@options.ConfirmText</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private ElementReference dialogElement;
+    private DialogOptions? focusedFor;
+
+    protected override void OnInitialized() {
+        dialogService.OnChange += OnDialogChanged;
+    }
+
+    private void OnDialogChanged() => InvokeAsync(StateHasChanged);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        // Move the focus into a newly opened dialog, so Escape works and screen readers announce it.
+        var current = dialogService.Current;
+        if (current != null && current != focusedFor) {
+            focusedFor = current;
+            await dialogElement.FocusAsync();
+        }
+        if (current == null)
+            focusedFor = null;
+    }
+
+    private void Confirm() => dialogService.Close(true);
+
+    private void Cancel() => dialogService.Close(false);
+
+    private void OnKeyDown(KeyboardEventArgs e) {
+        if (e.Key == "Escape")
+            Cancel();
+    }
+
+    public void Dispose() {
+        dialogService.OnChange -= OnDialogChanged;
+    }
+}

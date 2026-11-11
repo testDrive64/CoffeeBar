@@ -1,0 +1,44 @@
+@using CoffeeBar.Services
+@using CoffeeBar.Data.Models
+@inject MemberService memberService;
+@inject GelatoService gelatoService;
+@inject PayInfoService payInfoService;
+
+<MemberRow Member="member" ItemName="Gelato" IconName="gelato"
+            Total="GelatoAmount" Open="OpenGelatoAmount" Cost="getCost" LastPayDate="lastPayDate"
+            OnAdd="AddGelato" OnRemove="RemoveLastGelato" OnPaid="StateHasChanged" />
+
+@code {
+    [Parameter, EditorRequired]
+    public Member member { get; set; } = null!;
+
+    public int GelatoAmount {
+        get {
+            return gelatoService.GetAmount(member);
+        }
+    }
+    public double getCost {
+        get => Math.Round(OpenGelatoAmount*memberService.GelatoPrice, 2);
+    }
+
+    public int OpenGelatoAmount {
+        get {
+            return gelatoService.GetOpenGelatoAmount(member);
+        }
+    }
+
+    public DateTime lastPayDate {
+        get => payInfoService.GetLastPayDate(member);
+    }
+    private async Task AddGelato() {
+        if (member == null)
+            throw new Exception("No Member is defined!");
+        await gelatoService.AddGelato(member);
+    }
+
+    private async Task RemoveLastGelato() {
+        if(member == null)
+            throw new Exception("No Member is defined!");
+        await gelatoService.RemoveLastGelato(member);
+    }
+}

@@ -1,0 +1,18 @@
+@inherits LayoutComponentBase
+@layout MainLayout
+@inject NavigationManager navigationManager
+
+<button class="cb-btn cb-btn-outline" @onclick="NavigateToOverview" style="margin-bottom: 1.25rem;">
+    <Icon Name="back" /> Back to the overview
+</button>
+<div>
+    @Body
+</div>
+
+@code {
+    private void NavigateToOverview()
+    {
+        // This will use client navigation to retain the current mode (server/client)
+        navigationManager.NavigateTo("/coffeelist");
+    }
+}
