@@ -1,0 +1,37 @@
+@inject IJSRuntime js
+@implements IAsyncDisposable
+
+@* Renders a Chart.js 4 chart (wwwroot/js/charts.js). Config is the Chart.js configuration object. *@
+<div class="cb-chart">
+    <canvas @ref="canvas" role="img" aria-label="@Label"></canvas>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public object Config { get; set; } = null!;
+    [Parameter]
+    public string? Label { get; set; }
+
+    private ElementReference canvas;
+    private object? renderedConfig;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        // Only (re)draw when a new configuration object was passed in.
+        if (ReferenceEquals(Config, renderedConfig))
+            return;
+        renderedConfig = Config;
+        await js.InvokeVoidAsync("coffeeCharts.render", canvas, Config);
+    }
+
+    public async ValueTask DisposeAsync() {
+        // Nothing was drawn while prerendering, and JS is not available then.
+        if (renderedConfig == null)
+            return;
+        try {
+            await js.InvokeVoidAsync("coffeeCharts.destroy", canvas);
+        }
+        catch (JSDisconnectedException) {
+            // The browser tab is already gone, so is the chart.
+        }
+    }
+}

@@ -1,9 +1,7 @@
 @page "/memberdetails/{id:int}"
 @using CoffeeBar.Services
 @using CoffeeBar.Data.Models
-@using ChartJs.Blazor.LineChart
-@using ChartJs.Blazor.Common.Axes
-@using ChartJs.Blazor.Common.Time
+@using System.Globalization
 @inject MemberService memberService
 @inject CoffeeService coffeeService
 @inject GelatoService gelatoService
@@ -61,7 +59,7 @@ else
         }
         else
         {
-            <Chart Config="_config"></Chart>
+            <ChartCanvas Config="chartConfig" Label="@($"Coffees per day and paid coffees of {member.Name}")" />
         }
     </div>
 
@@ -151,12 +149,14 @@ else
     private string? deleteError;
     private int gelatoCount;
     private double totalPaid;
-    private LineConfig _config = null!;
+    private object chartConfig = new();
 
     // Validated chart colors (see --coffee-chart / --brand-chart in site.css)
     private const string CoffeeColor = "#B06A2C";
     private const string PayColor = "#1F5BB5";
     private const string GridColor = "rgba(30, 36, 48, 0.08)";
+    private const string TextColor = "#1E2430";
+    private const string MutedColor = "#5B6573";
 
     private bool HasOpenCosts => openCoffees > 0 || openGelatos > 0;
 
@@ -212,85 +212,70 @@ else
         gelatoCount = gelatoService.GetAmount(member);
         totalPaid = payDates.Sum(x => x.CurrentCoffeePrice + x.CurrentGelatoPrice);
 
-        _config = new LineConfig
-        {
-            Options = new LineOptions
-            {
-                Responsive = true,
-                Legend = new Legend
-                {
-                    Position = Position.Top,
-                    Labels = new LegendLabels { UsePointStyle = true, FontColor = "#1E2430" }
-                },
-                Tooltips = new Tooltips
-                {
-                    Mode = InteractionMode.Nearest,
-                    Intersect = false
-                },
-                Hover = new Hover
-                {
-                    Mode = InteractionMode.Nearest,
-                    Intersect = false
-                },
-                Scales = new Scales() {
-                    XAxes = new List<CartesianAxis>() {
-                        new TimeAxis {
-                            Time = new TimeOptions {
-                                Unit = TimeMeasurement.Day,
-                                TooltipFormat = DateFormats.ChartDate,
-                                DisplayFormats = new Dictionary<TimeMeasurement, string> { { TimeMeasurement.Day, DateFormats.ChartDate } }
-                            },
-                            GridLines = new GridLines { Display = false },
-                            Ticks = new TimeTicks { FontColor = "#5B6573" }
-                        }
+        chartConfig = BuildChartConfig();
+    }
+
+    // Chart.js 4 configuration, serialized to JSON for wwwroot/js/charts.js.
+    // Dates are sent as ISO strings without time zone, so the browser shows the same calendar day.
+    private object BuildChartConfig() {
+        static string Iso(DateTime value) => value.ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture);
+
+        return new {
+            type = "line",
+            data = new {
+                datasets = new object[] {
+                    new {
+                        label = "Coffees per day",
+                        data = dates.Select(day => new { x = Iso(day.Key), y = (double)day.Value }).ToArray(),
+                        borderColor = CoffeeColor,
+                        backgroundColor = CoffeeColor,
+                        borderWidth = 2,
+                        pointRadius = 4,
+                        pointHoverRadius = 6,
+                        pointHitRadius = 12,
+                        tension = 0,
+                        fill = false
                     },
-                    YAxes = new List<CartesianAxis>() {
-                        new LinearCartesianAxis {
-                            ScaleLabel = new ScaleLabel {
-                                Display = true,
-                                LabelString = "Coffees",
-                                FontColor = "#5B6573"
-                            },
-                            GridLines = new GridLines { Color = GridColor, ZeroLineColor = GridColor },
-                            Ticks = new LinearCartesianTicks { BeginAtZero = true, Precision = 0, FontColor = "#5B6573" }
-                        }
+                    new {
+                        label = "Paid coffees",
+                        data = payDates.Select(payInfo => new { x = Iso(payInfo.Created), y = payInfo.Amount }).ToArray(),
+                        borderColor = PayColor,
+                        backgroundColor = PayColor,
+                        borderWidth = 2,
+                        pointStyle = "rectRot",
+                        pointRadius = 5,
+                        pointHoverRadius = 7,
+                        pointHitRadius = 12,
+                        showLine = false,
+                        fill = false
+                    }
+                }
+            },
+            options = new {
+                responsive = true,
+                interaction = new { mode = "nearest", intersect = false },
+                plugins = new {
+                    legend = new { position = "top", labels = new { usePointStyle = true, color = TextColor } }
+                },
+                scales = new {
+                    x = new {
+                        type = "time",
+                        time = new {
+                            unit = "day",
+                            tooltipFormat = DateFormats.ChartDate,
+                            displayFormats = new { day = DateFormats.ChartDate }
+                        },
+                        grid = new { display = false },
+                        ticks = new { color = MutedColor }
+                    },
+                    y = new {
+                        beginAtZero = true,
+                        title = new { display = true, text = "Coffees", color = MutedColor },
+                        grid = new { color = GridColor },
+                        ticks = new { precision = 0, color = MutedColor }
                     }
                 }
             }
         };
-
-        var dailyDataset = new LineDataset<TimePoint>() {
-            Label = "Coffees per day",
-            BackgroundColor = CoffeeColor,
-            BorderColor = CoffeeColor,
-            BorderWidth = 2,
-            PointRadius = 4,
-            PointHoverRadius = 6,
-            PointHitRadius = 12,
-            LineTension = 0,
-            Fill = FillingMode.Disabled
-        };
-        foreach(var day in dates) {
-            dailyDataset.Add(new TimePoint(day.Key, day.Value));
-        }
-
-        var payDataset = new LineDataset<TimePoint>() {
-            Label = "Paid coffees",
-            BackgroundColor = PayColor,
-            BorderColor = PayColor,
-            BorderWidth = 2,
-            PointRadius = 5,
-            PointHoverRadius = 7,
-            PointHitRadius = 12,
-            PointStyle = PointStyle.RectRot,
-            ShowLine = false,
-            Fill = FillingMode.Disabled
-        };
-        foreach(var payInfo in payDates) {
-            payDataset.Add(new TimePoint(payInfo.Created, payInfo.Amount));
-        }
-
-        _config.Data.Datasets.Add(dailyDataset);
-        _config.Data.Datasets.Add(payDataset);
     }
 }

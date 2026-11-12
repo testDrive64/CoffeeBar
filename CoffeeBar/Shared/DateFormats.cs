@@ -8,8 +8,8 @@ public static class DateFormats
     public const string Date = "dd.MM.yyyy";
     public const string DateTime = "dd.MM.yyyy HH:mm";
 
-    // Moment.js equivalent of Date, used by the charts.
-    public const string ChartDate = "DD.MM.YYYY";
+    // date-fns equivalent of Date, used by the charts (Chart.js date adapter).
+    public const string ChartDate = "dd.MM.yyyy";
 
     public static string ToGermanDate(this System.DateTime value) =>
         value.ToString(Date, CultureInfo.InvariantCulture);

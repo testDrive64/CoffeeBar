@@ -746,3 +746,9 @@ button, .cb-btn, input, a {
 @media (prefers-reduced-motion: reduce) {
     .cb-steam { animation: none; }
 }
+
+/* ---------- Charts ---------- */
+.cb-chart {
+    position: relative;
+    width: 100%;
+}
