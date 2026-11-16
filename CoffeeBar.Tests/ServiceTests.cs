@@ -116,6 +116,28 @@ public class ServiceTests : IDisposable
         Assert.Equal(1, _gelatos.GetGelatoAmountSince(DateTime.Today));
     }
 
+    [Fact]
+    public void DailyTotals_AllMembers_FillsDaysWithoutCoffee()
+    {
+        var a = NewMember("A");
+        var b = NewMember("B");
+        using (var context = _factory.CreateDbContext())
+        {
+            context.Coffees.AddRange(
+                new Coffee { MemberId = a.Id, CreatedDate = new DateTime(2023, 5, 1, 23, 59, 0) },
+                new Coffee { MemberId = b.Id, CreatedDate = new DateTime(2023, 5, 1, 8, 0, 0) },
+                new Coffee { MemberId = a.Id, CreatedDate = new DateTime(2023, 5, 3, 9, 0, 0) },
+                new Coffee { MemberId = a.Id, CreatedDate = new DateTime(2023, 4, 30, 9, 0, 0) }, // before
+                new Coffee { MemberId = a.Id, CreatedDate = new DateTime(2023, 5, 4, 0, 0, 0) }); // after
+            context.SaveChanges();
+        }
+
+        var totals = _coffees.GetDailyCoffeeTotals(new DateTime(2023, 5, 1, 12, 0, 0), new DateTime(2023, 5, 3));
+
+        Assert.Equal(new[] { new DateTime(2023, 5, 1), new DateTime(2023, 5, 2), new DateTime(2023, 5, 3) }, totals.Keys);
+        Assert.Equal(new[] { 2, 0, 1 }, totals.Values);
+    }
+
     // ---------- Gelato ----------
 
     [Fact]

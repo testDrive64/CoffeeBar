@@ -10,6 +10,9 @@ public static class DateFormats
 
     // date-fns equivalent of Date, used by the charts (Chart.js date adapter).
     public const string ChartDate = "dd.MM.yyyy";
+    public const string ChartDayMonth = "dd.MM.";
+    public const string ChartMonth = "MM.yyyy";
+    public const string ChartWeek = "'Week of' dd.MM.yyyy";
 
     public static string ToGermanDate(this System.DateTime value) =>
         value.ToString(Date, CultureInfo.InvariantCulture);

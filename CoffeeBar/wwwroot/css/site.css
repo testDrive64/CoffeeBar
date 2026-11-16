@@ -752,3 +752,61 @@ button, .cb-btn, input, a {
     position: relative;
     width: 100%;
 }
+
+/* ---------- Home: coffee trend ---------- */
+.cb-trend {
+    margin-bottom: 1.25rem;
+}
+
+.cb-trend .cb-chart {
+    height: 320px;
+}
+
+.cb-trend-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.cb-trend-head h2 {
+    margin-bottom: .25rem;
+}
+
+.cb-trend-summary {
+    margin: 0;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.cb-segmented {
+    display: inline-flex;
+    padding: 4px;
+    gap: 4px;
+    border-radius: var(--radius-sm);
+    background: var(--crema);
+}
+
+.cb-segment {
+    min-height: 44px;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.cb-segment:hover {
+    color: var(--text);
+}
+
+.cb-segment[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--coffee-dark);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .12);
+}
