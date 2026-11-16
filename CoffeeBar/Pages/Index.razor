@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using CoffeeBar.Services
 @using CoffeeBar.Data.Models
+@using System.Globalization
 @inject MemberService memberService;
 @inject CoffeeService coffeeService;
 @inject GelatoService gelatoService;
@@ -29,6 +30,29 @@
     </div>
 </div>
 
+<div class="cb-card cb-trend">
+    <div class="cb-trend-head">
+        <div>
+            <h2>Coffee trend</h2>
+            <p class="cb-trend-summary">@trendTotal coffees in the last @trendDays days · Ø @trendAverage.ToString("0.0", CultureInfo.InvariantCulture) per day</p>
+        </div>
+        <div class="cb-segmented" role="group" aria-label="Period">
+            @foreach (var days in TrendPeriods)
+            {
+                <button class="cb-segment" aria-pressed="@(days == trendDays ? "true" : "false")" @onclick="() => SelectPeriod(days)">@days days</button>
+            }
+        </div>
+    </div>
+    @if (trendTotal == 0)
+    {
+        <p class="cb-empty">No coffees in the last @trendDays days.</p>
+    }
+    else
+    {
+        <ChartCanvas Config="trendConfig" Label="@($"Coffees per day of all members in the last {trendDays} days")" />
+    }
+</div>
+
 <div class="cb-tiles">
     <a class="cb-tile is-coffee" href="coffeelist">
         <span class="cb-tile-icon"><Icon Name="cup" Size="36" /></span>
@@ -52,6 +76,19 @@
     private int gelatosToday;
     private int memberCount;
 
+    private static readonly int[] TrendPeriods = { 30, 90, 365 };
+    private int trendDays = 30;
+    private int trendTotal;
+    private double trendAverage;
+    private object trendConfig = new();
+
+    // Same validated chart colors as the member details (see --coffee-chart / --brand-chart in site.css)
+    private const string CoffeeColor = "#B06A2C";
+    private const string AverageColor = "#1F5BB5";
+    private const string GridColor = "rgba(30, 36, 48, 0.08)";
+    private const string TextColor = "#1E2430";
+    private const string MutedColor = "#5B6573";
+
     private string Greeting => DateTime.Now.Hour switch {
         < 11 => "Good morning",
         < 17 => "Coffee time",
@@ -62,5 +99,115 @@
         coffeesToday = coffeeService.GetCoffeeAmountSince(DateTime.Today);
         gelatosToday = gelatoService.GetGelatoAmountSince(DateTime.Today);
         memberCount = memberService.GetMembers().Count;
+        LoadTrend();
+    }
+
+    private void SelectPeriod(int days) {
+        if (days == trendDays)
+            return;
+        trendDays = days;
+        LoadTrend();
+    }
+
+    // Short periods per day with a 7-day average, longer ones per week (from Monday) with a 4-week average.
+    private bool Weekly => trendDays > 31;
+    private int AverageWindow => Weekly ? 4 : 7;
+
+    private static DateTime StartOfWeek(DateTime day) => day.Date.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+
+    private void LoadTrend() {
+        var periodStart = DateTime.Today.AddDays(1 - trendDays);
+        var firstBucket = Weekly ? StartOfWeek(periodStart) : periodStart;
+        var bucketDays = Weekly ? 7 : 1;
+        // A few buckets before the period, so the average is complete from the first bucket on.
+        var loadStart = firstBucket.AddDays(-(AverageWindow - 1) * bucketDays);
+        var daily = coffeeService.GetDailyCoffeeTotals(loadStart, DateTime.Today);
+
+        var buckets = daily
+            .GroupBy(day => (day.Key - loadStart).Days / bucketDays)
+            .Select(bucket => new KeyValuePair<DateTime, int>(bucket.First().Key, bucket.Sum(day => day.Value)))
+            .ToList();
+        var shown = buckets.Skip(AverageWindow - 1).ToList();
+        var averages = Enumerable.Range(AverageWindow - 1, shown.Count)
+            .Select(i => Math.Round(buckets.Skip(i - AverageWindow + 1).Take(AverageWindow).Average(x => x.Value), 1))
+            .ToList();
+
+        trendTotal = daily.Where(day => day.Key >= periodStart).Sum(day => day.Value);
+        trendAverage = (double)trendTotal / trendDays;
+        trendConfig = BuildTrendConfig(shown, averages);
+    }
+
+    // Chart.js 4 configuration: coffees per bucket as bars, the rolling average as line on top.
+    // Dates are sent as ISO strings without time zone, so the browser shows the same calendar day.
+    private object BuildTrendConfig(List<KeyValuePair<DateTime, int>> buckets, List<double> averages) {
+        static string Iso(DateTime value) => value.ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture);
+        var unit = trendDays switch {
+            <= 31 => "day",
+            <= 120 => "week",
+            _ => "month"
+        };
+
+        return new {
+            type = "bar",
+            data = new {
+                datasets = new object[] {
+                    new {
+                        type = "line",
+                        label = Weekly ? $"{AverageWindow}-week average" : $"{AverageWindow}-day average",
+                        data = buckets.Select((bucket, i) => new { x = Iso(bucket.Key), y = averages[i] }).ToArray(),
+                        borderColor = AverageColor,
+                        backgroundColor = AverageColor,
+                        borderWidth = 2,
+                        pointRadius = 0,
+                        pointHoverRadius = 5,
+                        pointHitRadius = 12,
+                        tension = 0.3,
+                        fill = false,
+                        order = 0
+                    },
+                    new {
+                        type = "bar",
+                        label = Weekly ? "Coffees per week" : "Coffees per day",
+                        data = buckets.Select(bucket => new { x = Iso(bucket.Key), y = (double)bucket.Value }).ToArray(),
+                        backgroundColor = CoffeeColor,
+                        hoverBackgroundColor = CoffeeColor,
+                        borderRadius = 4,
+                        borderSkipped = "bottom",
+                        order = 1
+                    }
+                }
+            },
+            options = new {
+                responsive = true,
+                maintainAspectRatio = false, // height comes from .cb-trend .cb-chart
+                interaction = new { mode = "index", intersect = false },
+                plugins = new {
+                    legend = new { position = "top", labels = new { usePointStyle = true, color = TextColor } }
+                },
+                scales = new {
+                    x = new {
+                        type = "time",
+                        offset = true,
+                        time = new {
+                            unit,
+                            tooltipFormat = Weekly ? DateFormats.ChartWeek : DateFormats.ChartDate,
+                            displayFormats = new {
+                                day = DateFormats.ChartDayMonth,
+                                week = DateFormats.ChartDayMonth,
+                                month = DateFormats.ChartMonth
+                            }
+                        },
+                        grid = new { display = false },
+                        ticks = new { color = MutedColor, maxRotation = 0, autoSkip = true }
+                    },
+                    y = new {
+                        beginAtZero = true,
+                        title = new { display = true, text = "Coffees", color = MutedColor },
+                        grid = new { color = GridColor },
+                        ticks = new { precision = 0, color = MutedColor }
+                    }
+                }
+            }
+        };
     }
 }

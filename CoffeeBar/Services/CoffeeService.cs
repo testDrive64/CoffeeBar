@@ -37,6 +37,26 @@ public class CoffeeService {
         }
     }
 
+    // Coffees of all members per calendar day from 'from' to 'to' (both inclusive).
+    // Days without coffee are included with 0, so the result has no gaps.
+    public SortedDictionary<DateTime, int> GetDailyCoffeeTotals(DateTime from, DateTime to) {
+        var start = from.Date;
+        var end = to.Date;
+        var totals = new SortedDictionary<DateTime, int>();
+        for (var day = start; day <= end; day = day.AddDays(1))
+            totals[day] = 0;
+
+        using(var context = _dbContextFactory.CreateDbContext()) {
+            var created = context.Coffees
+                                .Where(x => x.CreatedDate >= start && x.CreatedDate < end.AddDays(1))
+                                .Select(x => x.CreatedDate)
+                                .ToList();
+            foreach (var date in created)
+                totals[date.Date]++;
+        }
+        return totals;
+    }
+
     public int GetOpenCoffeeAmount(Member member) {
         var lastPayDate = payInfoService.GetLastPayDate(member);
         using(var context = _dbContextFactory.CreateDbContext()) {
